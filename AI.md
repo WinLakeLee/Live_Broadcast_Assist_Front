@@ -29,6 +29,13 @@
 - JSX 코드가 미니파이(압축)되어 한 줄로 작성되어 유지보수가 불가능했던 문제를 해결
 - 전체 `.tsx`, `.ts` 파일들에 대해 Prettier를 적용하여 들여쓰기 및 줄바꿈을 사람과 AI가 모두 읽기 편하도록 재정렬 완료
 
+### 6. 프론트엔드 모던화 리팩토링 (Shadcn UI, TailwindCSS, React Query)
+- **UI 라이브러리 교체**: 기존의 Vanilla CSS(globals.css)를 완전히 제거하고 TailwindCSS(v4)로 교체했습니다. 디자인 일관성을 위해 `Shadcn UI` 컴포넌트(Button, Card, Input, Label 등)를 도입했습니다.
+- **데이터 패칭 및 상태 관리 분리**: 수동으로 `useEffect`와 `AbortController`를 사용하던 API 요청 로직을 `@tanstack/react-query`의 `useQuery`와 `useMutation`으로 마이그레이션했습니다. 이를 통해 상태 머신(`usePurchaseMachine`)은 순수 '흐름 제어'에만 집중하고 데이터의 캐싱, 재시도, 취소는 React Query가 전담하도록 책임을 명확히 분리했습니다.
+- **에러 및 알림 개선**: 에러 메시지 처리를 로컬 상태 대신 `sonner` 토스트(Toast) 메시지로 일괄 교체하여 직관적인 피드백을 제공합니다.
+- **폼 입력 포맷팅 적용**: 전화번호 등 사용자의 입력(react-hook-form) 편의성을 높이기 위해 자동 하이픈 추가 등의 포맷팅 로직을 적용했습니다.
+- **SEO 및 메타 태그 개선**: `layout.tsx` 파일에 오픈그래프(OG) 등 SEO 관련 설정을 추가하여 웹 접근성과 노출도를 향상했습니다.
+
 ---
 
 ## 🚀 향후 개발 시 참고 (가이드라인)
@@ -36,8 +43,8 @@
 1. **API 계약 준수 원칙**  
    프론트엔드에서 API 스키마(`Zod` 등)를 변경해야 할 경우, 반드시 `docs/api_contract.md` 문서를 먼저 업데이트하고 백엔드 팀과 모델 동기화 여부를 확인하세요.
 
-2. **UI/UX 개발 기조 (Vanilla CSS & Semantic HTML)**  
-   현재 프로젝트는 트래픽 대응 성능 향상과 세밀한 디자인 제어를 위해 무거운 외부 프레임워크나 유틸리티 클래스(`TailwindCSS` 등) 없이, 시맨틱 태그(`form`, `section` 등)와 `className` 위주의 바닐라 CSS로 구축되어 있습니다. 향후 컴포넌트 라이브러리 도입이 필요해지면 논의 후 일괄 마이그레이션을 검토합니다.
+2. **UI/UX 개발 기조 (Tailwind & Shadcn UI)**  
+   현재 프로젝트는 TailwindCSS와 Shadcn UI를 주력 UI 프레임워크로 사용합니다. 새로운 UI를 구성할 때에는 `components/ui/` 디렉토리에 있는 재사용 가능한 Shadcn 컴포넌트(Button, Card, Input 등)를 적극적으로 활용하세요. 상태 메시지나 알림은 `sonner` 패키지를 활용합니다.
 
 3. **결제/주문 로직의 상태 관리**  
-   복잡한 주문 및 결제 흐름은 여러 컴포넌트 간의 꼬임을 막기 위해 `hooks/use-purchase-machine.ts`에서 상태 머신(State Machine) 패턴으로 관리됩니다. 결제 정책이 변경되면 반드시 이 훅의 상태 전이(`Reducer`) 로직을 우선 검토하세요.
+   복잡한 주문 및 결제 흐름은 여러 컴포넌트 간의 꼬임을 막기 위해 `hooks/use-purchase-machine.ts`에서 상태 머신(State Machine) 패턴으로 관리됩니다. 단, 데이터 패칭(API 호출)은 `usePurchaseMachine` 외부 컴포넌트 레벨에서 `React Query`로 처리하며, 훅은 오직 성공 시 다음 단계로의 **상태 전이(State Transition)** 역할에만 집중합니다.

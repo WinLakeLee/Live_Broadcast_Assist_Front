@@ -2,6 +2,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, Clock3, LoaderCircle, ShieldCheck, Truck } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
+
 import { TurnstileWidget, type TurnstileHandle } from "./turnstile-widget";
 import { createOrder } from "@/lib/api/orders";
 import { ApiError } from "@/lib/api/errors";
@@ -17,6 +20,9 @@ import {
   type StoredReview,
 } from "@/lib/secure-session";
 
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+
 const reviewSteps = ["구매목록", "구매내역 확인", "입금", "배송"];
 
 export function ReviewClient({ nonce }: { nonce?: string }) {
@@ -25,11 +31,8 @@ export function ReviewClient({ nonce }: { nonce?: string }) {
   const [now, setNow] = useState<number | null>(null);
   const [captcha, setCaptcha] = useState("");
   const [pushToken, setPushToken] = useState("");
-  const [message, setMessage] = useState("");
-  const [busy, setBusy] = useState(false);
   const [invalidated, setInvalidated] = useState(false);
-  const submitting = useRef(false);
-  const request = useRef<AbortController | undefined>(undefined);
+  const [invalidationMessage, setInvalidationMessage] = useState("");
   const turnstile = useRef<TurnstileHandle>(null);
 
   useEffect(() => {
@@ -43,7 +46,6 @@ export function ReviewClient({ nonce }: { nonce?: string }) {
     return () => {
       clearTimeout(timer);
       clearInterval(clock);
-      request.current?.abort();
     };
   }, [router]);
 
@@ -51,47 +53,21 @@ export function ReviewClient({ nonce }: { nonce?: string }) {
     clearReview();
     router.push("/purchase");
   }, [router]);
+
   const enablePush = async () => {
-    setMessage("");
     const token = await requestPushToken();
     if (token) {
       setPushToken(token);
-      setMessage("상태 변경 알림을 받을 준비가 되었습니다.");
-    } else
-      setMessage(
-        "알림 권한이 거부되었거나 푸시 게이트웨이가 연결되지 않았습니다. 주문 상태는 조회 화면에서 확인할 수 있습니다.",
-      );
+      toast.success("상태 변경 알림을 받을 준비가 되었습니다.");
+    } else {
+      toast.error("알림 권한이 거부되었거나 푸시 게이트웨이가 연결되지 않았습니다.");
+    }
   };
 
-  if (!review || now === null)
-    return (
-      <main className="shell narrow">
-        <section className="card" role="status">
-          <LoaderCircle className="spin" />
-          <h1>구매내역을 불러오고 있습니다</h1>
-        </section>
-      </main>
-    );
-  const expiresAt = Date.parse(review.quote.expires_at);
-  const expired = !Number.isFinite(expiresAt) || now >= expiresAt;
-
-  const confirm = async () => {
-    if (expired || invalidated || !captcha || submitting.current) return;
-    const ticket = loadWaitingTicket();
-    if (!ticket || (ticket.enabled && ticket.status !== "ready")) {
-      setMessage("입장 시간이 만료되었습니다. 대기실부터 다시 입장해 주세요.");
-      setInvalidated(true);
-      clearReview();
-      clearWaitingTicket();
-      return;
-    }
-    submitting.current = true;
-    setBusy(true);
-    setMessage("");
-    const controller = new AbortController();
-    request.current = controller;
-    try {
-      const order = await createOrder(
+  const { mutate: doConfirm, isPending: busy } = useMutation({
+    mutationFn: async ({ ticket }: { ticket: any }) => {
+      if (!review) throw new Error("No review");
+      return createOrder(
         {
           buyer_name: review.draft.buyerName,
           phone: review.draft.phone,
@@ -107,173 +83,227 @@ export function ReviewClient({ nonce }: { nonce?: string }) {
           enabled: ticket.enabled,
           ticketId: ticket.ticket_id,
           ticketToken: ticket.ticket_token,
-        },
-        controller.signal,
+        }
       );
+    },
+    onSuccess: (order) => {
       setCaptcha("");
       clearReview();
       clearPurchaseDraft();
       clearWaitingTicket();
       saveOrder(order);
       router.push("/purchase/complete");
-    } catch (error) {
+    },
+    onError: (error) => {
       setCaptcha("");
       turnstile.current?.reset();
       const api = error instanceof ApiError ? error : null;
       if (api?.httpStatus === 409 || api?.httpStatus === 422) {
         clearReview();
         setInvalidated(true);
-        setMessage(
-          api.httpStatus === 422
-            ? "견적 정보가 유효하지 않습니다. 상품 화면에서 새 견적을 받아 주세요."
-            : "가격·재고 또는 견적 유효시간이 변경되었습니다. 새 견적을 확인한 뒤 다시 확정해 주세요.",
-        );
+        const msg = api.httpStatus === 422
+          ? "견적 정보가 유효하지 않습니다. 상품 화면에서 새 견적을 받아 주세요."
+          : "가격·재고 또는 견적 유효시간이 변경되었습니다. 새 견적을 확인한 뒤 다시 확정해 주세요.";
+        setInvalidationMessage(msg);
+        toast.error(msg);
       } else {
-        setMessage(
-          api?.message ??
-            "주문 결과를 확인하지 못했습니다. 자동으로 다시 제출하지 말고 고객지원에 확인해 주세요.",
-        );
+        toast.error(api?.message ?? "주문 결과를 확인하지 못했습니다. 다시 시도해 주세요.");
       }
-    } finally {
-      submitting.current = false;
-      setBusy(false);
+    },
+  });
+
+  if (!review || now === null) {
+    return (
+      <main className="w-full max-w-3xl mx-auto px-4 py-12 pb-24">
+        <Card className="flex flex-col items-center justify-center p-12 text-center shadow-sm">
+          <LoaderCircle className="animate-spin text-[#e94d2f] mb-6" size={48} aria-hidden="true" />
+          <h1 className="text-2xl font-bold">구매내역을 불러오고 있습니다</h1>
+        </Card>
+      </main>
+    );
+  }
+
+  const expiresAt = Date.parse(review.quote.expires_at);
+  const expired = !Number.isFinite(expiresAt) || now >= expiresAt;
+
+  const confirm = () => {
+    if (expired || invalidated || !captcha || busy) return;
+    const ticket = loadWaitingTicket();
+    if (!ticket || (ticket.enabled && ticket.status !== "ready")) {
+      setInvalidationMessage("입장 시간이 만료되었습니다. 대기실부터 다시 입장해 주세요.");
+      setInvalidated(true);
+      clearReview();
+      clearWaitingTicket();
+      toast.error("입장 시간이 만료되었습니다.");
+      return;
     }
+    doConfirm({ ticket });
   };
 
   return (
-    <main className="shell narrow">
-      <ol className="steps review-steps" aria-label="구매 진행 단계">
+    <main className="w-full max-w-3xl mx-auto px-4 py-12 pb-32">
+      <ol className="flex items-center w-full justify-between mb-8 overflow-hidden" aria-label="구매 진행 단계">
         {reviewSteps.map((step, index) => (
           <li
             key={step}
-            className={index <= 1 ? "active" : ""}
+            className={`flex-1 text-center text-xs sm:text-sm font-bold border-t-4 pt-2 transition-colors ${
+              index <= 1 ? "border-[#e94d2f] text-slate-900" : "border-slate-200 text-slate-400"
+            }`}
             aria-current={index === 1 ? "step" : undefined}
           >
             {step}
           </li>
         ))}
       </ol>
-      <div className="page-head">
-        <span className="eyebrow">ORDER REVIEW</span>
-        <h1>구매내역을 확인해 주세요</h1>
-        <p>
+
+      <div className="mb-8">
+        <span className="inline-flex gap-2 items-center text-[#e94d2f] text-xs font-black tracking-widest uppercase mb-2">ORDER REVIEW</span>
+        <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-4">구매내역을 확인해 주세요</h1>
+        <p className="text-slate-500">
           표시된 견적은 재고 예약이 아니며 주문 확정 시 서버가 다시 검증합니다.
         </p>
       </div>
-      {message && (
-        <div
-          className={invalidated ? "notice error" : "notice"}
-          role={invalidated ? "alert" : "status"}
-        >
-          {message}
+
+      {invalidated && (
+        <div className="p-4 mb-6 bg-red-50 border border-red-200 rounded-xl text-red-800" role="alert">
+          {invalidationMessage}
         </div>
       )}
-      {expired && (
-        <div className="notice error" role="alert">
-          <Clock3 size={18} /> 견적 유효시간이 지났습니다. 기존 견적으로 주문할
-          수 없습니다.
+
+      {expired && !invalidated && (
+        <div className="p-4 mb-6 bg-red-50 border border-red-200 rounded-xl text-red-800 flex items-center gap-3" role="alert">
+          <Clock3 size={18} className="shrink-0" />
+          <p>견적 유효시간이 지났습니다. 기존 견적으로 주문할 수 없습니다.</p>
         </div>
       )}
-      <section className="card">
-        <h2>상품과 금액</h2>
-        {review.quote.lines.map((line) => (
-          <div
-            className={`quote-line ${!line.accepted ? "cancelled" : ""}`}
-            key={line.product_name}
-          >
-            <span>
-              <strong>{line.product_name}</strong>
-              <br />
-              <small>
-                {line.quantity}개 × {formatMoney(line.unit_price)}
-                {!line.accepted &&
-                  ` · 재고 부족으로 제외 예정 (구매 가능 ${line.available_quantity}개)`}
-              </small>
-            </span>
-            <strong>
-              {line.accepted ? formatMoney(line.line_amount) : "제외"}
+
+      <Card className="mb-6 shadow-sm">
+        <CardHeader>
+          <CardTitle>상품과 금액</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-0">
+          {review.quote.lines.map((line) => (
+            <div
+              className={`flex justify-between items-center py-4 border-b border-slate-100 ${
+                !line.accepted ? "opacity-50 line-through" : ""
+              }`}
+              key={line.product_name}
+            >
+              <div className="flex flex-col">
+                <strong className="text-lg">{line.product_name}</strong>
+                <span className="text-sm text-slate-500 mt-1">
+                  {line.quantity}개 × {formatMoney(line.unit_price)}
+                  {!line.accepted &&
+                    ` · 재고 부족으로 제외 예정 (구매 가능 ${line.available_quantity}개)`}
+                </span>
+              </div>
+              <strong className="text-lg whitespace-nowrap ml-4">
+                {line.accepted ? formatMoney(line.line_amount) : "제외"}
+              </strong>
+            </div>
+          ))}
+          <div className="flex justify-between items-center py-4 border-b border-slate-100">
+            <span className="text-slate-500">재고 부족 처리</span>
+            <strong className="font-bold">
+              {review.draft.stockPolicy === "partial"
+                ? "가능한 상품만 구매"
+                : "하나라도 부족하면 전체 취소"}
             </strong>
           </div>
-        ))}
-        <div className="summary-row">
-          <span>재고 부족 처리</span>
-          <strong>
-            {review.draft.stockPolicy === "partial"
-              ? "가능한 상품만 구매"
-              : "하나라도 부족하면 전체 취소"}
-          </strong>
-        </div>
-        <div className="summary-row quote-total">
-          <span>최종 입금 예정액</span>
-          <strong>{formatMoney(review.quote.payment_amount)}</strong>
-        </div>
-        <p className="muted">
-          견적 유효시간:{" "}
-          {Number.isFinite(expiresAt)
-            ? formatDateTime(review.quote.expires_at)
-            : "확인 불가"}
-        </p>
-      </section>
-      <section className="card">
-        <h2>수취인과 배송</h2>
-        <div className="summary-row">
-          <span>수취인명</span>
-          <strong>{review.draft.buyerName}</strong>
-        </div>
-        <div className="summary-row">
-          <span>전화번호</span>
-          <strong>{review.draft.phone}</strong>
-        </div>
-        <div className="summary-row">
-          <span>전체 주소</span>
-          <strong>{review.draft.address}</strong>
-        </div>
-        <div className="summary-row">
-          <span>배송사</span>
-          <strong>
-            <Truck size={17} /> CU(롯데택배)
-          </strong>
-        </div>
-      </section>
-      <section className="card">
-        <h2>알림과 사람 확인</h2>
-        <p>
-          푸시는 상태 변경 신호이며, 실제 상태는 주문 조회 API로 다시
-          확인합니다.
-        </p>
-        <button
-          type="button"
-          className="button"
-          onClick={enablePush}
-          disabled={busy}
-        >
-          <Bell size={17} />
-          {pushToken ? "알림 준비 완료" : "상태 변경 알림 받기"}
-        </button>
-        <h3>사람인지 확인</h3>
-        <TurnstileWidget ref={turnstile} nonce={nonce} onToken={setCaptcha} />
-        <div className="notice">
-          <ShieldCheck size={18} /> 서버가 가격·재고·견적 토큰을 최종
-          검증합니다.
-        </div>
-      </section>
-      <div className="sticky-action">
-        <button className="button" disabled={busy} onClick={modify}>
-          수정
-        </button>
-        {expired || invalidated ? (
-          <button className="button primary" onClick={modify}>
-            새 견적 받기
-          </button>
-        ) : (
-          <button
-            className="button primary"
-            disabled={busy || !captcha}
-            onClick={confirm}
+          <div className="flex justify-between items-center py-5 border-b border-slate-100 text-xl font-black">
+            <span>최종 입금 예정액</span>
+            <strong className="text-[#e94d2f] text-2xl">{formatMoney(review.quote.payment_amount)}</strong>
+          </div>
+          <div className="pt-4 text-sm text-slate-500">
+            견적 유효시간:{" "}
+            <span className="font-mono">
+              {Number.isFinite(expiresAt)
+                ? formatDateTime(review.quote.expires_at)
+                : "확인 불가"}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6 shadow-sm">
+        <CardHeader>
+          <CardTitle>수취인과 배송</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex justify-between items-center pb-4 border-b border-slate-100">
+            <span className="text-slate-500">수취인명</span>
+            <strong className="font-bold">{review.draft.buyerName}</strong>
+          </div>
+          <div className="flex justify-between items-center pb-4 border-b border-slate-100">
+            <span className="text-slate-500">전화번호</span>
+            <strong className="font-bold">{review.draft.phone}</strong>
+          </div>
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center pb-4 border-b border-slate-100 gap-2">
+            <span className="text-slate-500 whitespace-nowrap">전체 주소</span>
+            <strong className="font-bold md:text-right">{review.draft.address}</strong>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-slate-500">배송사</span>
+            <strong className="font-bold flex items-center gap-2">
+              <Truck size={17} /> CU(롯데택배)
+            </strong>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-8 shadow-sm">
+        <CardHeader>
+          <CardTitle>알림과 사람 확인</CardTitle>
+          <CardDescription>
+            푸시는 상태 변경 신호이며, 실제 상태는 주문 조회 API로 다시 확인합니다.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={enablePush}
+            disabled={busy || !!pushToken}
+            className="w-full md:w-auto"
           >
-            {busy ? "주문 확인 중…" : "구매내역 확정"}
-          </button>
-        )}
+            <Bell size={17} className="mr-2" />
+            {pushToken ? "알림 준비 완료" : "상태 변경 알림 받기"}
+          </Button>
+          
+          <div className="pt-4 border-t border-slate-100">
+            <h3 className="font-bold mb-4">사람인지 확인</h3>
+            <div className="mb-4">
+              <TurnstileWidget ref={turnstile} nonce={nonce} onToken={setCaptcha} />
+            </div>
+            <div className="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-sm">
+              <ShieldCheck size={18} className="text-[#18794e] shrink-0" />
+              <p>서버가 가격·재고·견적 토큰을 최종 검증합니다.</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50">
+        <div className="max-w-3xl mx-auto flex justify-between items-center gap-4 px-2">
+          <Button variant="outline" size="lg" disabled={busy} onClick={modify} className="w-1/3">
+            수정
+          </Button>
+          
+          {expired || invalidated ? (
+            <Button size="lg" className="w-2/3 text-base" onClick={modify}>
+              새 견적 받기
+            </Button>
+          ) : (
+            <Button
+              size="lg"
+              className="w-2/3 text-base"
+              disabled={busy || !captcha}
+              onClick={confirm}
+            >
+              {busy ? "주문 확인 중…" : "구매내역 확정"}
+            </Button>
+          )}
+        </div>
       </div>
     </main>
   );
