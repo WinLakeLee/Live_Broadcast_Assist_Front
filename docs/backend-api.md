@@ -1,5 +1,7 @@
 # FastAPI 브라우저 계약
 
+> 계약 버전과 endpoint별 정확한 JSON 구조는 [공통 API 계약](api_contract.md)이 단일 원본입니다. 이 문서는 프런트 구현 요약이며 충돌 시 공통 계약을 먼저 갱신합니다.
+
 모든 성공/오류 응답은 `{ status, code, message, data }` JSON envelope입니다. 클라이언트는 `credentials: omit`, `cache: no-store`, `Accept: application/json`을 사용합니다.
 
 | 메서드 | 경로 | 인증 헤더 | 용도 |
