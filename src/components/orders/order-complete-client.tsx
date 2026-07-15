@@ -9,12 +9,12 @@ import { StepIndicator } from "@/components/ui/step-indicator";
 import { PaymentStatus } from "@/components/payment/payment-status";
 import { clearOrder, loadOrder, type StoredOrder } from "@/lib/secure-session";
 import { getOrderStatus, registerDepositor } from "@/lib/api/orders";
-import type { OrderStatusData, PaymentMatchData } from "@/lib/api/contracts";
+import type { DepositorResultData, OrderStatusData } from "@/lib/api/contracts";
 import { ApiError } from "@/lib/api/errors";
 import { formatMoney } from "@/lib/format";
 
 const schema=z.object({depositor_name:z.string().trim().min(2,"입금자명을 입력해 주세요."),bank_name:z.string().trim().min(2,"은행명을 입력해 주세요.")});type Form=z.infer<typeof schema>;
-export function OrderCompleteClient(){const router=useRouter();const[order]=useState<StoredOrder|null>(()=>loadOrder());const[status,setStatus]=useState<OrderStatusData|PaymentMatchData>();const[message,setMessage]=useState("");const[busy,setBusy]=useState(false);const form=useForm<Form>({resolver:zodResolver(schema),defaultValues:{depositor_name:"",bank_name:""}});
+export function OrderCompleteClient(){const router=useRouter();const[order]=useState<StoredOrder|null>(()=>loadOrder());const[status,setStatus]=useState<OrderStatusData|DepositorResultData>();const[message,setMessage]=useState("");const[busy,setBusy]=useState(false);const form=useForm<Form>({resolver:zodResolver(schema),defaultValues:{depositor_name:"",bank_name:""}});
 useEffect(()=>{if(!order)router.replace("/orders/lookup")},[router,order]);
 if(!order)return <main className="shell narrow"><p role="status">주문 정보를 확인하고 있습니다.</p></main>;
 const text=`주문번호: ${order.order_reference}\n비밀 조회키: ${order.order_token}\n입금 예정액: ${formatMoney(order.payment_amount)}`;
