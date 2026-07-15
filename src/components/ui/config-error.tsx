@@ -1,0 +1,1 @@
+export function ConfigError({ message }: { message: string }) { return <main className="shell"><section className="card error-card" role="alert"><span className="eyebrow">설정 오류</span><h1>서비스를 시작할 수 없습니다</h1><p>{message}</p><p>운영 담당자에게 환경변수 설정을 요청해 주세요.</p></section></main>; }
