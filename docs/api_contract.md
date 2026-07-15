@@ -18,6 +18,9 @@
 6. 테스트 mock은 임의의 간소화 응답을 만들지 않고 이 문서의 envelope와 중첩 구조를 그대로 사용한다.
 7. 실제 백엔드를 호출하는 consumer contract smoke test 없이 “연동 완료”로 표시하지 않는다.
 
+두 저장소가 같은 상위 디렉터리에 있으면 `python scripts/check_api_contract_sync.py`로
+프런트 사본이 기준 문서와 바이트 단위로 동일한지 검사한다.
+
 ## 2. 공통 전송 규약
 
 - API base URL에는 경로·query·fragment를 붙이지 않는다. 예: `https://api.example.com`
@@ -415,4 +418,3 @@ FastAPI CORS는 다음을 허용해야 한다.
 - 백엔드 주문 생성에서 빈 `push_token` 허용
 - 입금자 등록 응답이 항상 `status`, `expected_amount`, `paid_amount`, `difference`를 반환하도록 통일
 - 입금자 등록용 schema와 전체 주문 상태용 schema를 분리
-
