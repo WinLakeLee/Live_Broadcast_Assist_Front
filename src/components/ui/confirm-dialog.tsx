@@ -1,3 +1,72 @@
 "use client";
 import { useEffect, useRef } from "react";
-export function ConfirmDialog({title,children,onConfirm,onCancel}:{title:string;children:React.ReactNode;onConfirm:()=>void;onCancel:()=>void}){const dialog=useRef<HTMLDivElement>(null);useEffect(()=>{const previous=document.activeElement as HTMLElement|null;const root=dialog.current;root?.querySelector<HTMLElement>("button")?.focus();const key=(e:KeyboardEvent)=>{if(e.key==="Escape")onCancel();if(e.key==="Tab"&&root){const items=[...root.querySelectorAll<HTMLElement>('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])')];if(!items.length)return;const first=items[0],last=items[items.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}};document.addEventListener("keydown",key);return()=>{document.removeEventListener("keydown",key);previous?.focus()}},[onCancel]);return <div className="dialog-backdrop" onMouseDown={e=>{if(e.currentTarget===e.target)onCancel()}}><div className="dialog" ref={dialog} role="dialog" aria-modal="true" aria-labelledby="dialog-title"><h2 id="dialog-title">{title}</h2>{children}<div className="actions"><button className="button" onClick={onCancel}>취소</button><button className="button primary" onClick={onConfirm}>변경 내용 저장</button></div></div></div>}
+export function ConfirmDialog({
+  title,
+  children,
+  onConfirm,
+  onCancel,
+}: {
+  title: string;
+  children: React.ReactNode;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const dialog = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    const root = dialog.current;
+    root?.querySelector<HTMLElement>("button")?.focus();
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onCancel();
+      if (e.key === "Tab" && root) {
+        const items = [
+          ...root.querySelectorAll<HTMLElement>(
+            'button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])',
+          ),
+        ];
+        if (!items.length) return;
+        const first = items[0],
+          last = items[items.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", key);
+    return () => {
+      document.removeEventListener("keydown", key);
+      previous?.focus();
+    };
+  }, [onCancel]);
+  return (
+    <div
+      className="dialog-backdrop"
+      onMouseDown={(e) => {
+        if (e.currentTarget === e.target) onCancel();
+      }}
+    >
+      <div
+        className="dialog"
+        ref={dialog}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="dialog-title"
+      >
+        <h2 id="dialog-title">{title}</h2>
+        {children}
+        <div className="actions">
+          <button className="button" onClick={onCancel}>
+            취소
+          </button>
+          <button className="button primary" onClick={onConfirm}>
+            변경 내용 저장
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -13,13 +13,210 @@ import type { DepositorResultData, OrderStatusData } from "@/lib/api/contracts";
 import { ApiError } from "@/lib/api/errors";
 import { formatMoney } from "@/lib/format";
 
-const schema=z.object({depositor_name:z.string().trim().min(2,"입금자명을 입력해 주세요."),bank_name:z.string().trim().min(2,"은행명을 입력해 주세요.")});type Form=z.infer<typeof schema>;
-export function OrderCompleteClient(){const router=useRouter();const[order]=useState<StoredOrder|null>(()=>loadOrder());const[status,setStatus]=useState<OrderStatusData|DepositorResultData>();const[message,setMessage]=useState("");const[busy,setBusy]=useState(false);const form=useForm<Form>({resolver:zodResolver(schema),defaultValues:{depositor_name:"",bank_name:""}});
-useEffect(()=>{if(!order)router.replace("/orders/lookup")},[router,order]);
-if(!order)return <main className="shell narrow"><p role="status">주문 정보를 확인하고 있습니다.</p></main>;
-const text=`주문번호: ${order.order_reference}\n비밀 조회키: ${order.order_token}\n입금 예정액: ${formatMoney(order.payment_amount)}`;
-const copy=async(value:string,label:string)=>{try{await navigator.clipboard.writeText(value);setMessage(`${label}을 복사했습니다.`)}catch{setMessage("복사 권한이 없어 직접 선택해 복사해 주세요.")}};
-const save=()=>{const blob=new Blob([text],{type:"text/plain;charset=utf-8"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=`order-${order.order_reference}.txt`;a.click();URL.revokeObjectURL(url)};
-const depositor=form.handleSubmit(async values=>{if(busy)return;setBusy(true);setMessage("");try{setStatus(await registerDepositor(order.order_reference,order.order_token,values));setMessage("입금정보를 등록하고 서버 확인 결과를 불러왔습니다.")}catch(e){const api=e instanceof ApiError?e:null;setMessage(api?.message??"입금정보를 등록하지 못했습니다.")}finally{setBusy(false)}});
-const check=async()=>{if(busy)return;setBusy(true);setMessage("");try{setStatus(await getOrderStatus(order.order_reference,order.order_token))}catch(e){const api=e instanceof ApiError?e:null;setMessage(api?.retryAfter?`${api.message} ${api.retryAfter}초 후 다시 확인해 주세요.`:api?.message??"상태를 확인하지 못했습니다.")}finally{setBusy(false)}};
-return <main className="shell narrow"><StepIndicator current={4}/><div className="page-head"><span className="eyebrow">ORDER CREATED</span><h1>주문이 접수되었습니다</h1><p>아래 정보를 먼저 안전한 곳에 보관하고 실제 입금 예정액을 확인하세요.</p></div>{message&&<div role="status" className="notice">{message}</div>}<section className="card"><h2>주문 보관 정보</h2><div className="summary-row"><span>주문번호</span><strong>{order.order_reference}</strong></div><button className="button no-print" onClick={()=>copy(order.order_reference,"주문번호")}><Copy size={17}/> 주문번호 복사</button><h3>비밀 조회키</h3><div className="secret">{order.order_token}</div><p className="notice warning">조회키를 잃어버리면 온라인으로 주문내역을 확인하기 어렵습니다. 다른 사람에게 공유하지 마세요.</p><div className="summary-row quote-total"><span>실제 입금 예정액</span><strong>{formatMoney(order.payment_amount)}</strong></div><div className="summary-row"><span>확보 / 취소 상품</span><strong>{order.accepted_count} / {order.cancelled_count}</strong></div><div className="actions no-print"><button className="button" onClick={()=>copy(order.order_token,"조회키")}><Copy size={17}/> 조회키 복사</button><button className="button" onClick={()=>copy(text,"주문 정보")}><Copy size={17}/> 함께 복사</button><button className="button" onClick={save}><Download size={17}/> 텍스트 저장</button><button className="button" onClick={()=>window.print()}><Printer size={17}/> 인쇄</button></div></section><form onSubmit={depositor} className="card no-print"><h2>입금정보 등록</h2><p>등록 후 서버가 입금 내역과 대조합니다. 등록만으로 결제 완료가 되지 않습니다.</p><div className="lookup-grid"><div className="field"><label htmlFor="depositor">입금자명</label><input id="depositor" autoComplete="name" {...form.register("depositor_name")}/>{form.formState.errors.depositor_name&&<p className="error-text">{form.formState.errors.depositor_name.message}</p>}</div><div className="field"><label htmlFor="bank">은행명</label><input id="bank" autoComplete="off" {...form.register("bank_name")}/>{form.formState.errors.bank_name&&<p className="error-text">{form.formState.errors.bank_name.message}</p>}</div></div><button className="button primary" disabled={busy}>입금정보 등록 및 확인</button></form><div className="actions no-print"><button className="button" disabled={busy} onClick={check}>현재 상태 확인</button><button className="button danger" onClick={()=>{clearOrder();router.replace("/orders/lookup")}}><Trash2 size={17}/> 이 기기에서 지우기</button></div>{status&&<PaymentStatus data={status}/>}</main>}
+const schema = z.object({
+  depositor_name: z.string().trim().min(2, "입금자명을 입력해 주세요."),
+  bank_name: z.string().trim().min(2, "은행명을 입력해 주세요."),
+});
+type Form = z.infer<typeof schema>;
+export function OrderCompleteClient() {
+  const router = useRouter();
+  const [order] = useState<StoredOrder | null>(() => loadOrder());
+  const [status, setStatus] = useState<OrderStatusData | DepositorResultData>();
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [lockout, setLockout] = useState(0);
+  const form = useForm<Form>({
+    resolver: zodResolver(schema),
+    defaultValues: { depositor_name: "", bank_name: "" },
+  });
+  useEffect(() => {
+    if (!order) router.replace("/orders/lookup");
+  }, [router, order]);
+  useEffect(() => {
+    if (lockout <= 0) return;
+    const t = window.setInterval(() => setLockout((l) => l - 1), 1000);
+    return () => window.clearInterval(t);
+  }, [lockout]);
+  if (!order)
+    return (
+      <main className="shell narrow">
+        <p role="status">주문 정보를 확인하고 있습니다.</p>
+      </main>
+    );
+  const text = `주문번호: ${order.order_reference}\n비밀 조회키: ${order.order_token}\n입금 예정액: ${formatMoney(order.payment_amount)}`;
+  const copy = async (value: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setMessage(`${label}을 복사했습니다.`);
+    } catch {
+      setMessage("복사 권한이 없어 직접 선택해 복사해 주세요.");
+    }
+  };
+  const save = () => {
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `order-${order.order_reference}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  const depositor = form.handleSubmit(async (values) => {
+    if (busy) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      setStatus(
+        await registerDepositor(
+          order.order_reference,
+          order.order_token,
+          values,
+        ),
+      );
+      setMessage("입금정보를 등록하고 서버 확인 결과를 불러왔습니다.");
+    } catch (e) {
+      const api = e instanceof ApiError ? e : null;
+      setMessage(api?.message ?? "입금정보를 등록하지 못했습니다.");
+    } finally {
+      setBusy(false);
+    }
+  });
+  const check = async () => {
+    if (busy || lockout > 0) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      setStatus(await getOrderStatus(order.order_reference, order.order_token));
+    } catch (e) {
+      const api = e instanceof ApiError ? e : null;
+      if (api?.retryAfter) setLockout(api.retryAfter);
+      setMessage(
+        api?.retryAfter
+          ? `${api.message} ${api.retryAfter}초 후 다시 확인해 주세요.`
+          : (api?.message ?? "상태를 확인하지 못했습니다."),
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <main className="shell narrow">
+      <StepIndicator current={4} />
+      <div className="page-head">
+        <span className="eyebrow">ORDER CREATED</span>
+        <h1>주문이 접수되었습니다</h1>
+        <p>
+          아래 정보를 먼저 안전한 곳에 보관하고 실제 입금 예정액을 확인하세요.
+        </p>
+      </div>
+      {message && (
+        <div role="status" className="notice">
+          {message}
+        </div>
+      )}
+      <section className="card">
+        <h2>주문 보관 정보</h2>
+        <div className="summary-row">
+          <span>주문번호</span>
+          <strong>{order.order_reference}</strong>
+        </div>
+        <button
+          className="button no-print"
+          onClick={() => copy(order.order_reference, "주문번호")}
+        >
+          <Copy size={17} /> 주문번호 복사
+        </button>
+        <h3>비밀 조회키</h3>
+        <div className="secret">{order.order_token}</div>
+        <p className="notice warning">
+          조회키를 잃어버리면 온라인으로 주문내역을 확인하기 어렵습니다. 다른
+          사람에게 공유하지 마세요.
+        </p>
+        <div className="summary-row quote-total">
+          <span>실제 입금 예정액</span>
+          <strong>{formatMoney(order.payment_amount)}</strong>
+        </div>
+        <div className="summary-row">
+          <span>확보 / 취소 상품</span>
+          <strong>
+            {order.accepted_count} / {order.cancelled_count}
+          </strong>
+        </div>
+        <div className="actions no-print">
+          <button
+            className="button"
+            onClick={() => copy(order.order_token, "조회키")}
+          >
+            <Copy size={17} /> 조회키 복사
+          </button>
+          <button className="button" onClick={() => copy(text, "주문 정보")}>
+            <Copy size={17} /> 함께 복사
+          </button>
+          <button className="button" onClick={save}>
+            <Download size={17} /> 텍스트 저장
+          </button>
+          <button className="button" onClick={() => window.print()}>
+            <Printer size={17} /> 인쇄
+          </button>
+        </div>
+      </section>
+      <form onSubmit={depositor} className="card no-print">
+        <h2>입금정보 등록</h2>
+        <p>
+          등록 후 서버가 입금 내역과 대조합니다. 등록만으로 결제 완료가 되지
+          않습니다.
+        </p>
+        <div className="lookup-grid">
+          <div className="field">
+            <label htmlFor="depositor">입금자명</label>
+            <input
+              id="depositor"
+              autoComplete="name"
+              {...form.register("depositor_name")}
+            />
+            {form.formState.errors.depositor_name && (
+              <p className="error-text">
+                {form.formState.errors.depositor_name.message}
+              </p>
+            )}
+          </div>
+          <div className="field">
+            <label htmlFor="bank">은행명</label>
+            <input
+              id="bank"
+              autoComplete="off"
+              {...form.register("bank_name")}
+            />
+            {form.formState.errors.bank_name && (
+              <p className="error-text">
+                {form.formState.errors.bank_name.message}
+              </p>
+            )}
+          </div>
+        </div>
+        <button className="button primary" disabled={busy}>
+          입금정보 등록 및 확인
+        </button>
+      </form>
+      <div className="actions no-print">
+        <button
+          className="button"
+          disabled={busy || lockout > 0}
+          onClick={check}
+        >
+          {lockout > 0 ? `${lockout}초 후 확인 가능` : "현재 상태 확인"}
+        </button>
+        <button
+          className="button danger"
+          onClick={() => {
+            clearOrder();
+            router.replace("/orders/lookup");
+          }}
+        >
+          <Trash2 size={17} /> 이 기기에서 지우기
+        </button>
+      </div>
+      {status && <PaymentStatus data={status} />}
+    </main>
+  );
+}

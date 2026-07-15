@@ -389,12 +389,34 @@ FastAPI CORS는 다음을 허용해야 한다.
 성공 `data`는 저장된 `Product` 하나다. `unit_price`는 1 이상이며 `stock_limit`가 현재
 예약수량보다 작으면 `409`다.
 
-## 9. 보안 저장 규칙
+## 9. 보안 및 결제 예외 처리 규칙
+
+### 9.1. 프런트엔드 보안 저장 규칙
 
 - 대기표 토큰, `quote_token`, 주문 조회키, 푸시 토큰, 배송 개인정보는 URL·cookie·`localStorage`·analytics·console에 넣지 않는다.
 - 탭 복구가 필요할 때만 `sessionStorage`를 사용하고 완료·취소·만료·409·관련 422에서 즉시 삭제한다.
 - 은행 웹훅 비밀값, 관리자 키 해시, Turnstile secret, DB·Redis URL은 프런트에 전달하지 않는다.
 - 푸시는 상태 변경 신호일 뿐이며 최종 상태는 `GET /orders/{reference}/status`로 확인한다.
+
+### 9.2. 결제 관련 보안 취약점 및 엣지 케이스 (Edge Cases)
+
+1. **가격 및 견적 위변조 (Price Manipulation)**
+   - `POST /orders` 요청 시 프런트가 전송하는 `quoted_amount` 및 `items`는 백엔드에서 `quote_token`의 서명된 원본 데이터와 일치하는지 반드시 무결성 검증을 거친다.
+2. **견적 만료 및 재고 선점 경쟁 (Race Condition)**
+   - `quote_token` 발급 시점과 실제 주문 생성 시점 사이에 재고가 소진될 수 있다. DB 트랜잭션과 락(Lock)을 통해 동시성 문제를 방지해야 한다.
+   - `expires_at`이 지난 `quote_token`은 422/409 오류로 거부되며, 프런트는 사용자에게 만료 사실을 알리고 새 견적을 받도록 유도한다.
+3. **재생산/중복 요청 방지 (Replay Attack & Idempotency)**
+   - 네트워크 지연이나 사용자의 다중 클릭으로 `POST /orders`가 중복 호출될 수 있다. 동일한 `quote_token`이 여러 번 사용되지 않도록 주문 성공 시 해당 토큰을 무효화(또는 멱등키로 활용)해야 한다.
+   - 프런트는 주문 요청 또는 입금자 등록 요청 진행 중 UI(버튼 등)를 비활성화해야 한다.
+4. **초과 입금 및 과소 입금 (Over/Under Payment)**
+   - 사용자가 견적 금액(`expected_amount`)과 다르게 입금한 경우를 대비해야 한다.
+   - 과소 입금 시: 주문 상태를 '결제대기' 또는 '부분입금'으로 유지하고, `difference` 필드에 남은 금액을 명시한다.
+   - 초과 입금 시: 초과 금액은 환불 프로세스로 연계할 수 있도록 `difference`를 음수로 처리하거나 별도의 안내 상태를 반환한다.
+5. **결제 상태 폴링 어뷰징 (Polling Abuse)**
+   - 프런트에서 결제 완료 확인을 위해 `GET /orders/{order_reference}/status`를 과도하게 반복 호출하면 429 제한(Rate Limit)에 걸린다.
+   - 지수 백오프(Exponential Backoff)를 적용하거나 푸시 알림 수신 직후에만 상태를 재조회하도록 제어한다.
+6. **외부 웹훅/콜백 위조 (Webhook Spoofing)**
+   - 무통장 입금 자동 확인 또는 PG사 결제 완료 웹훅은 반드시 제공자의 서명(Signature) 또는 화이트리스트 IP 검증을 거쳐, 공격자의 결제 완료 상태 조작을 차단한다.
 
 ## 10. 계약 검증 체크리스트
 

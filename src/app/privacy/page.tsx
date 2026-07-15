@@ -1,3 +1,28 @@
 import type { Metadata } from "next";
 export const metadata: Metadata = { title: "개인정보 수집·이용 안내" };
-export default function PrivacyPage() { return <main className="shell narrow"><div className="page-head"><span className="eyebrow">PRIVACY</span><h1>개인정보 수집·이용 안내</h1></div><article className="card"><p className="notice warning"><strong>운영 전 필수:</strong> 아래 자리표시자를 실제 사업자의 개인정보 처리 내용으로 교체해야 합니다.</p><h2>수집 항목</h2><p>주문자명, 전화번호, 배송주소, 입금자명, 은행명</p><h2>이용 목적</h2><p>주문 접수, 입금 확인, 상품 배송, 고객 문의 처리</p><h2>보유 기간</h2><p>[관계 법령과 사업자 정책에 따른 실제 보유 기간을 입력하세요.]</p><h2>동의 거부</h2><p>동의를 거부할 수 있으나 배송이 필요한 상품 구매가 제한될 수 있습니다.</p></article></main>; }
+export default function PrivacyPage() {
+  return (
+    <main className="shell narrow">
+      <div className="page-head">
+        <span className="eyebrow">PRIVACY</span>
+        <h1>개인정보 수집·이용 안내</h1>
+      </div>
+      <article className="card">
+        <p className="notice warning">
+          <strong>운영 전 필수:</strong> 아래 자리표시자를 실제 사업자의
+          개인정보 처리 내용으로 교체해야 합니다.
+        </p>
+        <h2>수집 항목</h2>
+        <p>주문자명, 전화번호, 배송주소, 입금자명, 은행명</p>
+        <h2>이용 목적</h2>
+        <p>주문 접수, 입금 확인, 상품 배송, 고객 문의 처리</p>
+        <h2>보유 기간</h2>
+        <p>[관계 법령과 사업자 정책에 따른 실제 보유 기간을 입력하세요.]</p>
+        <h2>동의 거부</h2>
+        <p>
+          동의를 거부할 수 있으나 배송이 필요한 상품 구매가 제한될 수 있습니다.
+        </p>
+      </article>
+    </main>
+  );
+}
