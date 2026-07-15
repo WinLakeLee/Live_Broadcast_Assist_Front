@@ -14,6 +14,8 @@
 | GET | `/admin/api/products` | `X-Admin-API-Key` | 전체 상품 |
 | PUT | `/admin/api/products` | `X-Admin-API-Key` | 상품 저장 |
 
-대기실이 켜진 경우 상품·견적·주문 요청에는 `X-Waiting-Room-Ticket`과 `X-Waiting-Room-Token`을 모두 보냅니다. `429`/`503`의 `Retry-After`를 우선하며, `403`은 Turnstile/입장권 재확인, `409`는 기존 견적 폐기, 주문 timeout은 고객지원 확인으로 처리합니다. 잘못된 주문번호와 조회키는 동일한 `404`로 응답해야 합니다.
+대기실이 켜진 경우 상품·견적·주문 요청에는 `X-Waiting-Room-Ticket`과 `X-Waiting-Room-Token`을 모두 보냅니다. `429`/`503`의 `Retry-After`를 우선하며, `403`은 Turnstile/입장권 재확인, `409`는 만료·변조·품목 불일치로 보고 기존 견적을 폐기합니다. 주문 시 `quote_token` 누락으로 받은 `422`도 재견적 대상으로 처리합니다. 주문 timeout은 결과가 불명확하므로 자동 재전송하지 않습니다. 잘못된 주문번호와 조회키는 동일한 `404`로 응답해야 합니다.
 
-프런트는 상품명/수량을 보낼 뿐 단가나 가용 재고를 확정하지 않습니다. `quoted_amount`는 바로 전 서버 견적의 금액이며 서버가 다시 검증합니다. 입금 차액 표시는 서버 `status`를 우선합니다.
+프런트는 상품명/수량을 보낼 뿐 단가나 가용 재고를 확정하지 않습니다. 견적 응답의 `quote_token`, `expires_at`, 품목별 `line_amount`를 그대로 보관·표시하고 브라우저에서 금액을 다시 계산하지 않습니다. 주문 확정 요청은 바로 전 견적의 `quoted_amount`와 `quote_token`, 사용자 동의 후 얻은 `push_token`을 함께 보내며 서버가 모두 다시 검증합니다. 푸시 토큰이 없으면 빈 문자열을 보냅니다.
+
+입금 차액 표시는 서버 `status`를 우선합니다. 입금 대조 및 주문 상태 응답의 `courier`는 `{ provider: "cu_lotte", display_name: "CU(롯데택배)", tracking_url }` 형식이며, 프런트는 서버가 제공한 HTTPS `tracking_url`만 외부 운송장 링크로 노출합니다. 푸시 알림은 상태 변경 신호로만 취급하고 표시할 상태는 `/orders/{reference}/status`에서 다시 조회합니다.

@@ -26,9 +26,9 @@ export const stockPolicySchema = z.enum(["partial", "all_or_nothing"]);
 export type StockPolicy = z.infer<typeof stockPolicySchema>;
 
 export const quoteSchema = z.object({
-  payment_amount: z.number().nonnegative(), lines: z.array(z.object({
+  payment_amount: z.number().nonnegative(), quote_token: z.string().min(1), expires_at: z.string().min(1), lines: z.array(z.object({
     product_name: z.string(), quantity: z.number().int().positive(), unit_price: z.number().nonnegative(),
-    available_quantity: z.number().int().nonnegative(), accepted: z.boolean(),
+    line_amount: z.number().nonnegative(), available_quantity: z.number().int().nonnegative(), accepted: z.boolean(),
   })),
 });
 export type QuoteData = z.infer<typeof quoteSchema>;
@@ -41,12 +41,14 @@ export type OrderCreatedData = z.infer<typeof orderCreatedSchema>;
 
 export const paymentMatchSchema = z.object({
   status: z.string(), expected_amount: z.number(), paid_amount: z.number(), difference: z.number(),
+  courier: z.object({ provider: z.string(), display_name: z.string(), tracking_url: z.string() }),
 });
 export type PaymentMatchData = z.infer<typeof paymentMatchSchema>;
 
 export const orderStatusSchema = z.object({
   order_reference: z.string(), status: z.string(), created_at: z.string(), buyer_name: z.string(), phone: z.string(),
   address: z.string(), expected_amount: z.number(), paid_amount: z.number(), difference: z.number(),
+  courier: z.object({ provider: z.string(), display_name: z.string(), tracking_url: z.string() }),
   items: z.array(z.object({ product_name: z.string(), quantity: z.number().int(), price: z.number(), status: z.string(),
     cancellation_reason: z.string(), tracking_number: z.string() })),
 });

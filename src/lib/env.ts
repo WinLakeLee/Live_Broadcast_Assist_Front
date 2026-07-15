@@ -5,7 +5,7 @@ export function getPublicEnv(): PublicEnv {
   const key = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
   let apiBaseUrl = raw.replace(/\/+$/, "");
   let error: string | undefined;
-  try { if (apiBaseUrl) apiBaseUrl = new URL(apiBaseUrl).toString().replace(/\/+$/, ""); }
+  try { if (apiBaseUrl) { const parsed = new URL(apiBaseUrl); apiBaseUrl = parsed.toString().replace(/\/+$/, ""); if (process.env.NODE_ENV === "production" && parsed.protocol !== "https:") error = "운영 환경의 주문 API 주소는 HTTPS여야 합니다."; } }
   catch { error = "주문 API 주소 형식이 올바르지 않습니다."; }
   if (process.env.NODE_ENV === "production" && (!apiBaseUrl || !key)) error = "운영 환경의 주문 API 주소 또는 Turnstile 사이트 키가 설정되지 않았습니다.";
   return { apiBaseUrl: apiBaseUrl || "http://localhost:8000", turnstileSiteKey: key, brandName: process.env.NEXT_PUBLIC_BRAND_NAME || "라이브 구매", supportContact: process.env.NEXT_PUBLIC_SUPPORT_CONTACT || "", valid: !error, error };

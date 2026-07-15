@@ -43,6 +43,7 @@ button:disabled { opacity:.52; cursor:not-allowed; }
 .steps li { text-align:center; font-size:.78rem; color:#8b8e87; border-top:3px solid #dedfd9; padding-top:8px; }
 .steps li span { display:none; }
 .steps li.active { color:var(--ink); border-color:var(--accent); font-weight:800; }
+.review-steps { grid-template-columns:repeat(4,1fr); }
 .card { padding:clamp(20px,4vw,34px); margin-bottom:18px; }
 .card h2 { margin:0 0 6px; letter-spacing:-.035em; }
 .card h3 { margin:20px 0 8px; }
