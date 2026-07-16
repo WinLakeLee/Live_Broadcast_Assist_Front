@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -9,8 +9,15 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { StepIndicator } from "@/components/ui/step-indicator";
-import { ProductSelector } from "@/components/products/product-selector";
-import { usePurchaseMachine, type Draft } from "@/hooks/use-purchase-machine";
+import { usePurchaseMachine } from "@/hooks/use-purchase-machine";
+import {
+  buyerFormFromDraft,
+  createCheckoutDraft,
+  quantitiesFromDraft,
+  sanitizeCheckoutQuantities,
+  type CheckoutDraft,
+} from "@/features/checkout/domain";
+import { CheckoutFlow } from "@/features/checkout/components/checkout-flow";
 import {
   loadPurchaseDraft,
   loadWaitingTicket,
@@ -25,17 +32,7 @@ import { buyerSchema, type BuyerForm } from "@/lib/validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-
-const defaults: BuyerForm = {
-  buyer_name: "",
-  phone: "",
-  address: "",
-  stock_policy: "partial",
-  coupon_code: "",
-  privacy_agreed: false as true,
-  policy_agreed: false as true,
-};
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function PurchaseClient() {
   const router = useRouter();
@@ -43,39 +40,16 @@ export function PurchaseClient() {
   
   const [savedDraft] = useState(loadPurchaseDraft);
   const [quantities, setQuantities] = useState<Record<string, number>>(() =>
-    Object.fromEntries(
-      savedDraft?.items.map((item) => [item.product_name, item.quantity]) ?? [],
-    ),
+    quantitiesFromDraft(savedDraft),
   );
 
   const form = useForm<BuyerForm>({
     resolver: zodResolver(buyerSchema),
-    defaultValues: savedDraft
-      ? {
-          buyer_name: savedDraft.buyerName,
-          phone: savedDraft.phone,
-          address: savedDraft.address,
-          stock_policy: savedDraft.stockPolicy,
-          coupon_code: savedDraft.couponCode ?? "",
-          privacy_agreed: true,
-          policy_agreed: true,
-        }
-      : defaults,
+    defaultValues: buyerFormFromDraft(savedDraft),
   });
 
-  const makeDraft = useCallback((): Draft => {
-    const values = form.getValues();
-    return {
-      items: Object.entries(quantities)
-        .filter(([, q]) => q > 0)
-        .map(([product_name, quantity]) => ({ product_name, quantity })),
-      buyerName: values.buyer_name,
-      phone: values.phone,
-      address: values.address,
-      stockPolicy: values.stock_policy,
-      couponCode: values.coupon_code,
-    };
-  }, [form, quantities]);
+  const makeDraft = (nextQuantities = quantities) =>
+    createCheckoutDraft(form.getValues(), nextQuantities);
 
   useEffect(() => {
     const ticket = loadWaitingTicket();
@@ -105,7 +79,13 @@ export function PurchaseClient() {
       if (state.status !== "loadingProducts") return null;
       try {
         const products = await getProducts(state.ticket, signal);
-        dispatch({ type: "PRODUCTS_LOADED", products, draft: makeDraft() });
+        const nextQuantities = sanitizeCheckoutQuantities(products, quantities);
+        setQuantities(nextQuantities);
+        dispatch({
+          type: "PRODUCTS_LOADED",
+          products,
+          draft: makeDraft(nextQuantities),
+        });
         return products;
       } catch (error) {
         if (!signal.aborted) {
@@ -122,17 +102,17 @@ export function PurchaseClient() {
   });
 
   const { mutate: doQuote, isPending: isQuoting } = useMutation({
-    mutationFn: async ({ draft, signal }: { draft: Draft; signal: AbortSignal }) => {
+    mutationFn: async (draft: CheckoutDraft) => {
       if (!("ticket" in state)) throw new Error("No ticket");
-      return getQuote({ stock_policy: draft.stockPolicy, coupon_code: draft.couponCode, items: draft.items }, state.ticket, signal);
+      return getQuote({ stock_policy: draft.stockPolicy, coupon_code: draft.couponCode, items: draft.items }, state.ticket);
     },
-    onSuccess: (quote, { draft }) => {
+    onSuccess: (quote, draft) => {
       savePurchaseDraft(draft);
       saveReview({ quote, draft });
       dispatch({ type: "QUOTE_RECEIVED", quote });
       router.push("/purchase/review");
     },
-    onError: (error, { draft }) => {
+    onError: (error, draft) => {
       const api = error instanceof ApiError ? error : null;
       dispatch({ type: "EDIT", draft });
       toast.error(api?.message ?? "견적을 확인하지 못했습니다.");
@@ -140,13 +120,14 @@ export function PurchaseClient() {
   });
 
   const quantityChange = (name: string, value: number) => {
-    setQuantities((current) => ({ ...current, [name]: value }));
+    const nextQuantities = { ...quantities, [name]: value };
+    setQuantities(nextQuantities);
     if (state.status === "quoteReady") {
-      dispatch({ type: "INVALIDATE_QUOTE", draft: makeDraft() });
+      dispatch({ type: "INVALIDATE_QUOTE", draft: makeDraft(nextQuantities) });
     }
   };
 
-  const quote = form.handleSubmit((values) => {
+  const quote = form.handleSubmit(() => {
     const draft = makeDraft();
     if (!draft.items.length) {
       toast.error("상품을 한 개 이상 선택해 주세요.");
@@ -157,16 +138,11 @@ export function PurchaseClient() {
     dispatch({ type: "EDIT", draft });
     dispatch({ type: "REQUEST_QUOTE" });
     
-    // Using a manually triggered abort signal to cancel if re-submitted rapidly is handled by react-query usually,
-    // but here we just fire mutation.
-    const controller = new AbortController();
-    doQuote({ draft, signal: controller.signal });
+    doQuote(draft);
   });
 
   if (
     state.status === "booting" ||
-    state.status === "issuingTicket" ||
-    state.status === "waiting" ||
     state.status === "ready" ||
     state.status === "loadingProducts" ||
     state.status === "quoteReady"
@@ -217,19 +193,6 @@ export function PurchaseClient() {
     );
   }
 
-  if (
-    state.status === "orderCreated" ||
-    state.status === "registeringDepositor" ||
-    state.status === "checkingPayment" ||
-    state.status === "completed"
-  ) {
-    return (
-      <main className="w-full max-w-4xl mx-auto px-4 py-12 pb-24 text-center">
-        <p className="text-slate-500 animate-pulse">주문 완료 화면으로 이동합니다.</p>
-      </main>
-    );
-  }
-
   const busy = state.status === "quoting" || isQuoting;
   const totalItems = Object.values(quantities).reduce((a, b) => a + b, 0);
 
@@ -249,10 +212,10 @@ export function PurchaseClient() {
           <CardTitle>1. 상품 선택</CardTitle>
         </CardHeader>
         <CardContent>
-          <ProductSelector
+          <CheckoutFlow
             products={state.products}
             quantities={quantities}
-            onChange={quantityChange}
+            onQuantityChange={quantityChange}
           />
         </CardContent>
       </Card>

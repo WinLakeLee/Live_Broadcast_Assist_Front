@@ -25,7 +25,7 @@ export function parseRetryAfter(
 ): number | undefined {
   if (!value) return undefined;
   const seconds = Number(value);
-  if (Number.isFinite(seconds) && seconds >= 0) return seconds;
+  if (Number.isFinite(seconds)) return seconds >= 0 ? seconds : undefined;
   const date = Date.parse(value);
   return Number.isNaN(date)
     ? undefined

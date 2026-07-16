@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
+import { useI18n } from "@/features/preferences/preferences-provider";
 export function ConfirmDialog({
   title,
   children,
@@ -11,6 +12,7 @@ export function ConfirmDialog({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const { t } = useI18n();
   const dialog = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
@@ -60,10 +62,10 @@ export function ConfirmDialog({
         {children}
         <div className="actions">
           <button className="button" onClick={onCancel}>
-            취소
+            {t("common.cancel")}
           </button>
           <button className="button primary" onClick={onConfirm}>
-            변경 내용 저장
+            {t("common.save")}
           </button>
         </div>
       </div>

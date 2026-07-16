@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { TurnstileWidget, type TurnstileHandle } from "./turnstile-widget";
 import { createOrder } from "@/lib/api/orders";
+import type { WaitingTicket } from "@/lib/api/contracts";
 import { ApiError } from "@/lib/api/errors";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { requestPushToken } from "@/lib/push";
@@ -34,6 +35,7 @@ export function ReviewClient({ nonce }: { nonce?: string }) {
   const [invalidated, setInvalidated] = useState(false);
   const [invalidationMessage, setInvalidationMessage] = useState("");
   const turnstile = useRef<TurnstileHandle>(null);
+  const submitting = useRef(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -65,7 +67,7 @@ export function ReviewClient({ nonce }: { nonce?: string }) {
   };
 
   const { mutate: doConfirm, isPending: busy } = useMutation({
-    mutationFn: async ({ ticket }: { ticket: any }) => {
+    mutationFn: async ({ ticket }: { ticket: WaitingTicket }) => {
       if (!review) throw new Error("No review");
       return createOrder(
         {
@@ -108,7 +110,15 @@ export function ReviewClient({ nonce }: { nonce?: string }) {
           : "가격·재고 또는 견적 유효시간이 변경되었습니다. 새 견적을 확인한 뒤 다시 확정해 주세요.";
         setInvalidationMessage(msg);
         toast.error(msg);
+      } else if (!api) {
+        clearReview();
+        setInvalidated(true);
+        const msg =
+          "주문 결과를 확인하지 못해 같은 주문을 자동으로 다시 제출하지 않습니다. 주문 조회 또는 고객지원으로 접수 여부를 확인해 주세요.";
+        setInvalidationMessage(msg);
+        toast.error(msg);
       } else {
+        submitting.current = false;
         toast.error(api?.message ?? "주문 결과를 확인하지 못했습니다. 다시 시도해 주세요.");
       }
     },
@@ -129,7 +139,7 @@ export function ReviewClient({ nonce }: { nonce?: string }) {
   const expired = !Number.isFinite(expiresAt) || now >= expiresAt;
 
   const confirm = () => {
-    if (expired || invalidated || !captcha || busy) return;
+    if (expired || invalidated || !captcha || busy || submitting.current) return;
     const ticket = loadWaitingTicket();
     if (!ticket || (ticket.enabled && ticket.status !== "ready")) {
       setInvalidationMessage("입장 시간이 만료되었습니다. 대기실부터 다시 입장해 주세요.");
@@ -139,6 +149,7 @@ export function ReviewClient({ nonce }: { nonce?: string }) {
       toast.error("입장 시간이 만료되었습니다.");
       return;
     }
+    submitting.current = true;
     doConfirm({ ticket });
   };
 
@@ -189,7 +200,7 @@ export function ReviewClient({ nonce }: { nonce?: string }) {
               className={`flex justify-between items-center py-4 border-b border-slate-100 ${
                 !line.accepted ? "opacity-50 line-through" : ""
               }`}
-              key={line.product_name}
+              key={line.product_id}
             >
               <div className="flex flex-col">
                 <strong className="text-lg">{line.product_name}</strong>

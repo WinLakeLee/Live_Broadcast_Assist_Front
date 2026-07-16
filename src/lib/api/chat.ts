@@ -9,8 +9,11 @@ export const createChatSession = (nickname: string, signal?: AbortSignal) =>
     signal,
   });
 
-export const getChatMessages = (signal?: AbortSignal) =>
-  apiRequest("/api/chat/messages?limit=100", chatFeedSchema, { signal });
+export const getChatMessages = (after = "", signal?: AbortSignal) => {
+  const query = new URLSearchParams({ limit: "100" });
+  if (after) query.set("after", after);
+  return apiRequest(`/api/chat/messages?${query}`, chatFeedSchema, { signal });
+};
 
 export const postChatMessage = (
   sessionId: string,

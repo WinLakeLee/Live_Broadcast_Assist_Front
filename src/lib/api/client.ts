@@ -4,7 +4,17 @@ import { ApiError, parseRetryAfter, safeApiError } from "./errors";
 
 const envelope = <T>(schema: ZodType<T>) => ({
   parse: (value: unknown): T => {
-    if (!value || typeof value !== "object" || !("data" in value))
+    if (
+      !value ||
+      typeof value !== "object" ||
+      !("data" in value) ||
+      !("status" in value) ||
+      value.status !== "success" ||
+      !("code" in value) ||
+      typeof value.code !== "string" ||
+      !("message" in value) ||
+      typeof value.message !== "string"
+    )
       throw new Error("invalid envelope");
     return schema.parse((value as { data: unknown }).data);
   },

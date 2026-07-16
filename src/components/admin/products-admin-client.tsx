@@ -3,95 +3,19 @@ import { useCallback, useState } from "react";
 import { KeyRound, Plus, Save } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import type { AdminProductInput, Product } from "@/lib/api/contracts";
 import { getAdminProducts, saveAdminProduct } from "@/lib/api/admin";
 import { ApiError } from "@/lib/api/errors";
 import { formatMoney } from "@/lib/format";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-const schema = z.object({
-  product_name: z.string().trim().min(1, "상품명을 입력해 주세요."),
-  unit_price: z.number().int().positive("단가는 1원 이상이어야 합니다."),
-  stock_limit: z.number().int().nonnegative(),
-  active: z.boolean(),
-  display_order: z
-    .number()
-    .int()
-    .min(0)
-    .max(1_000_000, "표시순서는 0~1,000,000이어야 합니다."),
-  purchase_method: z.enum(["fixed_price", "auction", "reverse_auction", "blind_auction"]),
-  reserve_price: z.number().int().nonnegative(),
-  bid_increment: z.number().int().nonnegative(),
-  sale_starts_at: z.string(),
-  sale_ends_at: z.string(),
-  sku: z.string().max(100),
-  category_major: z.string().max(100),
-  category_minor: z.string().max(100),
-  category_detail: z.string().max(100),
-  expected_arrival_date: z.string(),
-  arrival_date: z.string(),
-  catalog_item_id: z.string().max(100),
-  seller_id: z.string().min(1).max(100).regex(/^[A-Za-z0-9_-]+$/),
-  brand_name: z.string().max(100),
-  manufacturer: z.string().max(200),
-  model_number: z.string().max(100),
-  product_type: z.string().min(1).max(100).regex(/^[A-Za-z0-9_-]+$/),
-  description: z.string().max(5000),
-  condition_type: z.enum(["new", "used_like_new", "used_good", "used_acceptable"]),
-  parent_sku: z.string().max(100),
-  barcode: z.string().max(100),
-  option_values_json: z.string().refine((value) => isStringRecord(value), "옵션은 JSON 객체여야 합니다."),
-  attributes_json: z.string().refine((value) => isStringRecord(value), "속성은 JSON 객체여야 합니다."),
-  image_urls_text: z.string().refine(
-    (value) => value.split(/\r?\n/).filter(Boolean).every((url) => /^https:\/\//.test(url)),
-    "이미지는 줄마다 HTTPS URL을 입력해 주세요.",
-  ),
-  warehouse_code: z.string().min(1).max(100).regex(/^[A-Za-z0-9_-]+$/),
-  inbound_quantity: z.number().int().nonnegative(),
-});
-function isStringRecord(value: string) {
-  try {
-    const parsed: unknown = JSON.parse(value || "{}");
-    return Boolean(parsed) && !Array.isArray(parsed) && typeof parsed === "object" &&
-      Object.entries(parsed as Record<string, unknown>).every(([key, item]) => key && typeof item === "string");
-  } catch {
-    return false;
-  }
-}
-type Form = z.infer<typeof schema>;
-const blank: Form = {
-  product_name: "",
-  unit_price: 1,
-  stock_limit: 0,
-  active: true,
-  display_order: 1,
-  purchase_method: "fixed_price",
-  reserve_price: 0,
-  bid_increment: 0,
-  sale_starts_at: "",
-  sale_ends_at: "",
-  sku: "",
-  category_major: "",
-  category_minor: "",
-  category_detail: "",
-  expected_arrival_date: "",
-  arrival_date: "",
-  catalog_item_id: "",
-  seller_id: "direct",
-  brand_name: "",
-  manufacturer: "",
-  model_number: "",
-  product_type: "GENERAL",
-  description: "",
-  condition_type: "new",
-  parent_sku: "",
-  barcode: "",
-  option_values_json: "{}",
-  attributes_json: "{}",
-  image_urls_text: "",
-  warehouse_code: "MAIN",
-  inbound_quantity: 0,
-};
+import {
+  adminFormToInput,
+  adminProductFormSchema,
+  blankAdminProductForm,
+  productToAdminForm,
+  sortAdminProducts,
+  type AdminProductForm,
+} from "@/features/admin-products/form-model";
 export function ProductsAdminClient() {
   const [key, setKey] = useState("");
   const [verified, setVerified] = useState(false);
@@ -100,9 +24,9 @@ export function ProductsAdminClient() {
   const [pending, setPending] = useState<AdminProductInput>();
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
-  const form = useForm<Form>({
-    resolver: zodResolver(schema),
-    defaultValues: blank,
+  const form = useForm<AdminProductForm>({
+    resolver: zodResolver(adminProductFormSchema),
+    defaultValues: blankAdminProductForm,
   });
   const load = useCallback(async () => {
     if (!key || busy) return;
@@ -110,7 +34,7 @@ export function ProductsAdminClient() {
     setMessage("");
     try {
       const data = await getAdminProducts(key);
-      setProducts(data.sort((a, b) => a.display_order - b.display_order));
+      setProducts(sortAdminProducts(data));
       setVerified(true);
     } catch {
       setVerified(false);
@@ -121,43 +45,7 @@ export function ProductsAdminClient() {
   }, [key, busy]);
   const choose = (p?: Product) => {
     setSelected(p);
-    form.reset(
-      p
-        ? {
-            product_name: p.product_name,
-            unit_price: p.unit_price,
-            stock_limit: p.stock_limit,
-            active: p.active,
-            display_order: p.display_order,
-            purchase_method: p.purchase_method,
-            reserve_price: p.reserve_price,
-            bid_increment: p.bid_increment,
-            sale_starts_at: p.sale_starts_at,
-            sale_ends_at: p.sale_ends_at,
-            sku: p.sku,
-            category_major: p.category_major,
-            category_minor: p.category_minor,
-            category_detail: p.category_detail,
-            expected_arrival_date: p.expected_arrival_date,
-            arrival_date: p.arrival_date,
-            catalog_item_id: p.catalog?.catalog_item_id ?? "",
-            seller_id: p.listing?.seller_id ?? "direct",
-            brand_name: p.catalog?.brand_name ?? "",
-            manufacturer: p.catalog?.manufacturer ?? "",
-            model_number: p.catalog?.model_number ?? "",
-            product_type: p.catalog?.product_type ?? "GENERAL",
-            description: p.catalog?.description ?? "",
-            condition_type: p.listing?.condition_type ?? "new",
-            parent_sku: p.catalog?.parent_sku ?? "",
-            barcode: p.catalog?.barcode ?? "",
-            option_values_json: JSON.stringify(p.catalog?.option_values ?? {}, null, 2),
-            attributes_json: JSON.stringify(p.catalog?.attributes ?? {}, null, 2),
-            image_urls_text: (p.catalog?.image_urls ?? []).join("\n"),
-            warehouse_code: p.inventory[0]?.location_code ?? "MAIN",
-            inbound_quantity: p.inventory[0]?.inbound_quantity ?? 0,
-          }
-        : blank,
-    );
+    form.reset(productToAdminForm(p));
   };
   const prepare = form.handleSubmit((value) => {
     if (selected && value.stock_limit < selected.reserved_quantity) {
@@ -165,25 +53,19 @@ export function ProductsAdminClient() {
         "현재 예약수량보다 총 재고를 작게 입력했습니다. 서버에서도 저장을 거부합니다.",
       );
     }
-    const { option_values_json, attributes_json, image_urls_text, ...base } = value;
-    setPending({
-      ...base,
-      option_values: JSON.parse(option_values_json || "{}") as Record<string, string>,
-      attributes: JSON.parse(attributes_json || "{}") as Record<string, string>,
-      image_urls: image_urls_text.split(/\r?\n/).map((url) => url.trim()).filter(Boolean),
-    });
+    setPending(adminFormToInput(value));
   });
   const save = async () => {
     if (!pending || busy) return;
     setBusy(true);
     setMessage("");
     try {
-      await saveAdminProduct(key, pending);
+      const saved = await saveAdminProduct(key, pending);
       setPending(undefined);
       setMessage("상품을 저장했습니다.");
       const data = await getAdminProducts(key);
-      setProducts(data.sort((a, b) => a.display_order - b.display_order));
-      const updated = data.find((p) => p.product_name === pending.product_name);
+      setProducts(sortAdminProducts(data));
+      const updated = data.find((p) => p.product_id === saved.product_id);
       choose(updated);
     } catch (e) {
       const api = e instanceof ApiError ? e : null;
@@ -266,7 +148,7 @@ export function ProductsAdminClient() {
                 <tr
                   className="selectable"
                   tabIndex={0}
-                  key={p.product_name}
+                  key={p.product_id}
                   onClick={() => choose(p)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") choose(p);

@@ -1,22 +1,13 @@
 "use client";
 import { useReducer } from "react";
 import type {
-  OrderCreatedData,
-  OrderItem,
   Product,
   QuoteData,
-  StockPolicy,
   TicketCredentials,
 } from "@/lib/api/contracts";
+import type { CheckoutDraft } from "@/features/checkout/domain";
 
-export type Draft = {
-  items: OrderItem[];
-  buyerName: string;
-  phone: string;
-  address: string;
-  stockPolicy: StockPolicy;
-  couponCode: string;
-};
+export type Draft = CheckoutDraft;
 type BaseData = {
   ticket: TicketCredentials;
   products: Product[];
@@ -24,24 +15,11 @@ type BaseData = {
 };
 export type PurchaseState =
   | { status: "booting" }
-  | { status: "issuingTicket" }
-  | {
-      status: "waiting";
-      ticketId: string;
-      ticketToken: string;
-      position: number;
-      retryInterval: number;
-    }
   | { status: "ready"; ticket: TicketCredentials }
   | { status: "loadingProducts"; ticket: TicketCredentials }
   | ({ status: "editingOrder" } & BaseData)
   | ({ status: "quoting" } & BaseData)
   | ({ status: "quoteReady"; quote: QuoteData } & BaseData)
-  | ({ status: "submittingOrder"; quote: QuoteData } & BaseData)
-  | { status: "orderCreated"; order: OrderCreatedData }
-  | { status: "registeringDepositor"; order: OrderCreatedData }
-  | { status: "checkingPayment"; order: OrderCreatedData }
-  | { status: "completed"; order: OrderCreatedData }
   | {
       status: "recoverableError";
       previous: PurchaseState;
@@ -57,8 +35,6 @@ export type PurchaseEvent =
   | { type: "EDIT"; draft: Draft }
   | { type: "REQUEST_QUOTE" }
   | { type: "QUOTE_RECEIVED"; quote: QuoteData }
-  | { type: "SUBMIT_ORDER" }
-  | { type: "ORDER_CREATED"; order: OrderCreatedData }
   | { type: "INVALIDATE_QUOTE"; draft: Draft }
   | { type: "ERROR"; message: string; retry: string }
   | { type: "FATAL"; message: string }
@@ -115,14 +91,6 @@ export function purchaseReducer(
     case "QUOTE_RECEIVED":
       return state.status === "quoting"
         ? { ...state, status: "quoteReady", quote: event.quote }
-        : state;
-    case "SUBMIT_ORDER":
-      return state.status === "quoteReady"
-        ? { ...state, status: "submittingOrder" }
-        : state;
-    case "ORDER_CREATED":
-      return state.status === "submittingOrder"
-        ? { status: "orderCreated", order: event.order }
         : state;
     case "ERROR":
       return {

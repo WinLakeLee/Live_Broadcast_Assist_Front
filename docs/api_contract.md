@@ -1,12 +1,19 @@
 # Live Broadcast Assist 공통 API 계약
 
-- 계약 버전: `1.7.0`
+- 계약 버전: `2.0.0`
 - 기준일: `2026-07-16`
 - 기준 저장소: `Live_Broadcast_Assist/docs/api_contract.md`
 - 적용 대상: FastAPI 백엔드와 `Live_Broadcast_Assist_Front` Next.js 프런트
 
 이 문서는 두 애플리케이션 사이의 단일 계약 원본이다. 구현 코드, 프런트 Zod 스키마,
 테스트 mock, 다른 설명 문서가 이 문서와 다르면 이 문서를 기준으로 함께 수정한다.
+
+### 2.0.0 변경 요약
+
+- 상품명 변경과 무관한 서버 발급 `product_id`를 상품·견적·주문·제안 응답에 추가한다.
+- 주문·결제·품목 상태에 기계 판독용 `status_code`를 추가하고 한국어 `status`는 표시용으로 유지한다.
+- 상품·견적·주문·제안 요청은 `product_id`만 식별자로 사용한다.
+- 상품명 기반 제안 endpoint와 상품명 기반 요청 호환 계층은 제공하지 않는다.
 
 ## 1. 변경 규칙
 
@@ -112,6 +119,7 @@ FastAPI CORS는 다음을 허용해야 한다.
 
 ```json
 {
+  "product_id": "prd_01JZ8R7F6K2M4N8Q1T3V5W7X9Y",
   "product_name": "상품A",
   "unit_price": 12000,
   "stock_limit": 100,
@@ -168,6 +176,8 @@ FastAPI CORS는 다음을 허용해야 한다.
 ```
 
 - `unit_price`: 1 이상의 정수
+- `product_id`: 서버가 최초 생성 시 발급하는 전역 고유 불변 ID다. 상품명, SKU,
+  카탈로그 ID를 바꿔도 변경하거나 재사용하지 않는다.
 - `stock_limit`, `reserved_quantity`, `available_quantity`: 0 이상의 정수
 - `display_order`: 0~1,000,000 정수
 - `purchase_method`: `fixed_price`, `auction`, `reverse_auction`, `blind_auction`
@@ -284,7 +294,7 @@ iframe `src`로 사용한다. 현재 공급자는 YouTube이며 응답 형태는
 - `POST /admin/api/chat/sessions/{session_id}/ban`: 세션을 차단하고 기존 자체 메시지를 숨긴다.
 - 자체·YouTube 임시 피드는 기본 24시간 후 삭제한다. 신고 사유도 대상 메시지 삭제 시 함께 삭제한다.
 
-### `POST /api/products/{product_name}/offers`
+### `POST /api/products/by-id/{product_id}/offers`
 
 경매 계열 상품에 익명 구매 제안을 접수한다. 준비된 대기실 헤더가 필요하다.
 
@@ -298,7 +308,7 @@ iframe `src`로 사용한다. 현재 공급자는 YouTube이며 응답 형태는
 - 고정가 상품은 `409`이며 기존 견적/주문 API를 사용한다.
 
 성공 `data`에는 `offer_reference`, 한 번만 전달되는 `offer_token`, 상품·방식·금액·수량,
-`status=accepted`, `sale_ends_at`이 포함된다. 토큰은 주문 토큰과 동일하게 URL·로그에
+`product_id`, `product_name`, `status=accepted`, `sale_ends_at`이 포함된다. 토큰은 주문 토큰과 동일하게 URL·로그에
 노출하지 않는다.
 
 ### `GET /api/purchase-offers/{offer_reference}`
@@ -309,10 +319,38 @@ iframe `src`로 사용한다. 현재 공급자는 YouTube이며 응답 형태는
 ### OrderItem
 
 ```json
-{ "product_name": "상품A", "quantity": 2 }
+{
+  "product_id": "prd_01JZ8R7F6K2M4N8Q1T3V5W7X9Y",
+  "quantity": 2
+}
 ```
 
-동일 요청 안에서 `product_name`은 중복될 수 없다.
+- 요청의 `product_id`는 필수다. `product_name`은 응답의 표시용 snapshot이며 요청 식별자로 받지 않는다.
+- 동일 요청 안에서 같은 `product_id`는 중복될 수 없다.
+- 견적 토큰 내부에는 `product_id`, 수량, 단가, 정책, 쿠폰을 서명하여 상품명 변경이
+  견적 무결성이나 주문 생성에 영향을 주지 않게 한다.
+
+### 주문·결제 상태 code
+
+API 로직과 프런트 분기는 `status_code`만 사용한다. `status`는 사용자에게 표시하는 한국어
+문구이며 운영 중 문구가 바뀔 수 있으므로 조건 분기에 사용하지 않는다.
+
+| `status_code` | 기본 `status` | 의미 |
+|---|---|---|
+| `payment_pending` | 결제대기 | 입금 또는 결제 승인을 기다림 |
+| `payment_underpaid` | 입금부족 | 누적 입금액이 예정액보다 작음 |
+| `payment_overpaid` | 입금초과 | 누적 입금액이 예정액보다 큼 |
+| `depositor_mismatch` | 입금자불일치 | 입금자명 또는 은행 불일치 |
+| `payment_completed` | 결제완료 | 결제 검증 완료 |
+| `order_expired` | 주문만료 | 결제 기한 만료 |
+| `stock_cancelled` | 재고취소 | 전체 또는 일부 품목 재고 취소 |
+| `preparing_shipment` | 배송준비 | 출고 준비 중 |
+| `shipped` | 배송중 | 운송장 등록 및 배송 중 |
+| `delivered` | 배송완료 | 배송 완료 |
+| `refunded` | 환불완료 | 환불 완료 |
+
+알 수 없는 미래 code를 기존 소비자가 받을 수 있으므로 `status`는 항상 비어 있지 않은 문자열로
+함께 제공한다. 품목의 `status_code`도 같은 code 집합을 사용하되 해당 품목에 적용 가능한 값만 쓴다.
 
 ### Courier
 
@@ -380,6 +418,7 @@ iframe `src`로 사용한다. 현재 공급자는 YouTube이며 응답 형태는
 {
   "products": [
     {
+      "product_id": "prd_01JZ8R7F6K2M4N8Q1T3V5W7X9Y",
       "product_name": "상품A",
       "unit_price": 12000,
       "stock_limit": 100,
@@ -402,7 +441,10 @@ iframe `src`로 사용한다. 현재 공급자는 YouTube이며 응답 형태는
 {
   "stock_policy": "partial",
   "coupon_code": "WELCOME10",
-  "items": [{ "product_name": "상품A", "quantity": 2 }]
+  "items": [{
+    "product_id": "prd_01JZ8R7F6K2M4N8Q1T3V5W7X9Y",
+    "quantity": 2
+  }]
 }
 ```
 
@@ -420,6 +462,7 @@ iframe `src`로 사용한다. 현재 공급자는 YouTube이며 응답 형태는
   "expires_at": "2026-07-15T10:05:00+00:00",
   "lines": [
     {
+      "product_id": "prd_01JZ8R7F6K2M4N8Q1T3V5W7X9Y",
       "product_name": "상품A",
       "quantity": 2,
       "unit_price": 12000,
@@ -454,7 +497,10 @@ iframe `src`로 사용한다. 현재 공급자는 YouTube이며 응답 형태는
   "coupon_code": "WELCOME10",
   "quote_token": "server-signed-opaque-token",
   "captcha_token": "turnstile-response-token",
-  "items": [{ "product_name": "상품A", "quantity": 2 }]
+  "items": [{
+    "product_id": "prd_01JZ8R7F6K2M4N8Q1T3V5W7X9Y",
+    "quantity": 2
+  }]
 }
 ```
 
@@ -509,10 +555,11 @@ iframe `src`로 사용한다. 현재 공급자는 YouTube이며 응답 형태는
 }
 ```
 
-성공 `data`는 주문 상태와 관계없이 네 필드를 모두 포함한다.
+성공 `data`는 주문 상태와 관계없이 다섯 필드를 모두 포함한다.
 
 ```json
 {
+  "status_code": "payment_pending",
   "status": "결제대기",
   "expected_amount": 24000,
   "paid_amount": 0,
@@ -543,6 +590,7 @@ iframe `src`로 사용한다. 현재 공급자는 YouTube이며 응답 형태는
 ```json
 {
   "order_reference": "0123456789abcdef0123456789abcdef",
+  "status_code": "payment_completed",
   "status": "결제완료",
   "created_at": "2026-07-15T10:00:00+00:00",
   "buyer_name": "홍**",
@@ -558,9 +606,11 @@ iframe `src`로 사용한다. 현재 공급자는 YouTube이며 응답 형태는
   },
   "items": [
     {
+      "product_id": "prd_01JZ8R7F6K2M4N8Q1T3V5W7X9Y",
       "product_name": "상품A",
       "quantity": 2,
       "price": 24000,
+      "status_code": "payment_completed",
       "status": "결제완료",
       "cancellation_reason": "",
       "tracking_number": ""
@@ -569,7 +619,8 @@ iframe `src`로 사용한다. 현재 공급자는 YouTube이며 응답 형태는
 }
 ```
 
-잘못된 주문번호와 잘못된 조회키는 모두 같은 `404 NOT_FOUND`로 응답한다.
+잘못된 주문번호와 잘못된 조회키는 모두 같은 `404 NOT_FOUND`로 응답한다. 입금자 등록과
+주문 상태 응답은 항상 `status_code`와 `status`를 함께 반환한다.
 
 ## 8. 관리자 상품 API
 
@@ -593,6 +644,7 @@ iframe `src`로 사용한다. 현재 공급자는 YouTube이며 응답 형태는
 
 ```json
 {
+  "product_id": "",
   "product_name": "상품A",
   "unit_price": 12000,
   "stock_limit": 100,
@@ -620,9 +672,14 @@ iframe `src`로 사용한다. 현재 공급자는 YouTube이며 응답 형태는
 성공 `data`는 저장된 `Product` 하나다. `unit_price`는 1 이상이며 `stock_limit`가 현재
 예약수량보다 작으면 `409`다.
 
+- 생성 요청은 `product_id`를 생략하거나 빈 문자열로 보낸다. 서버가 ID를 발급해 응답한다.
+- 수정 요청은 조회 응답에서 받은 `product_id`를 그대로 보낸다. 서버는 ID로 수정 대상을 찾는다.
+- 클라이언트가 임의 생성한 ID, 다른 상품의 ID 재사용, 발급 후 ID 변경은 `422` 또는 `409`로 거부한다.
+
 상품 저장은 기존 체크아웃용 `products`와 카탈로그 상품, 변형 SKU, 판매자 리스팅,
 브랜드, 계층형 카테고리, 이미지/속성, 창고별 재고를 한 트랜잭션에서 함께 갱신한다.
-`catalog_item_id`가 비어 있으면 서버가 상품명 기반의 안정적인 ID를 생성한다.
+`catalog_item_id`가 비어 있으면 서버가 별도의 카탈로그 ID를 생성한다. `product_id`는 상품명,
+`catalog_item_id`, SKU와 독립된 내부 상품 식별자이며 상품명 기반으로 생성하지 않는다.
 
 ### 관리자 프로모션 및 통계 API
 
@@ -677,6 +734,10 @@ iframe `src`로 사용한다. 현재 공급자는 YouTube이며 응답 형태는
 - 대기실 비활성화와 만료의 `retry_after_seconds=0` fixture가 있다.
 - 푸시 토큰이 빈 주문과 유효 토큰 주문을 모두 검증한다.
 - 입금자 등록 응답과 전체 주문 상태 응답을 별도 schema로 검증한다.
+- 모든 상품·견적 line·주문 품목 응답에 동일한 `product_id`가 이어지는지 검증한다.
+- 상품명을 변경한 뒤에도 기존 `product_id`로 견적·주문·제안 조회가 성공하는지 검증한다.
+- 주문·입금자·품목 응답의 `status_code`가 허용된 code이고 `status`가 비어 있지 않은지 검증한다.
+- `product_id`와 `product_name`이 함께 온 요청은 ID를 우선하며 이름 변경 때문에 거부하지 않는지 검증한다.
 - 관리자 상품 단가·재고·표시순서 경계값이 백엔드와 프런트에서 일치한다.
 - 로컬 또는 CI smoke test가 mock 없이 FastAPI와 Next.js를 함께 실행해 상품 조회 → 견적까지 확인한다.
 
@@ -689,3 +750,63 @@ iframe `src`로 사용한다. 현재 공급자는 YouTube이며 응답 형태는
 - 백엔드 주문 생성에서 빈 `push_token` 허용
 - 입금자 등록 응답이 항상 `status`, `expected_amount`, `paid_amount`, `difference`를 반환하도록 통일
 - 입금자 등록용 schema와 전체 주문 상태용 schema를 분리
+
+## 12. 2.0.0 백엔드 구현 원칙
+
+운영 이력이 없는 초기 배포이므로 상품명 식별 요청과 전환용 호환 계층을 두지 않는다.
+
+### 12.1. 데이터베이스 마이그레이션
+
+1. 상품 테이블에 비어 있지 않은 불변 `product_id`를 추가한다. ULID 또는 UUID를 권장하며
+   외부에 노출되는 값에 순차 DB PK를 그대로 사용하지 않는다.
+2. 기존 상품 전체에 ID를 backfill하고 unique index와 `NOT NULL` 제약을 적용한다.
+3. 견적 payload/서명, 주문 품목, 구매 제안이 내부 상품 FK 또는 `product_id` snapshot을
+   보관하도록 변경한다. 표시용 `product_name` snapshot은 별도로 유지한다.
+4. 주문과 주문 품목에 `status_code`를 backfill한다. 기존 한국어 상태는 아래처럼 매핑한다.
+
+```text
+결제대기 -> payment_pending
+입금부족 -> payment_underpaid
+입금초과 -> payment_overpaid
+입금자불일치 -> depositor_mismatch
+결제완료 -> payment_completed
+주문만료 -> order_expired
+재고취소 -> stock_cancelled
+배송준비 -> preparing_shipment
+배송중 -> shipped
+배송완료 -> delivered
+환불완료 -> refunded
+```
+
+매핑할 수 없는 값이 발견되면 임의 code로 치환하지 말고 마이그레이션을 중단해 운영 데이터를
+확인한다. backfill 검증 후 `status_code`에 `NOT NULL`과 허용 값 CHECK 제약 또는 DB enum을 적용한다.
+
+### 12.2. API 및 서비스 변경
+
+1. `GET /api/products`, `GET /admin/api/products`, 관리자 저장 응답에 `product_id`를 추가한다.
+2. 견적·주문 입력 모델은 필수 `product_id`만 식별자로 허용한다.
+3. 견적 line과 주문 상태 품목에 `product_id`를 반환하고 견적 서명 대상도 ID 기준으로 바꾼다.
+4. 구매 제안은 `POST /api/products/by-id/{product_id}/offers`만 제공한다.
+5. 입금자 등록과 주문 상태 응답에 `status_code`를 추가한다. 상태 전이·웹훅·배송 로직도
+   한국어 문자열이 아닌 code 또는 내부 enum만 비교한다.
+6. 관리자 수정은 `product_id`를 우선하고, 생성 시에만 서버가 새 ID를 발급한다.
+
+### 12.3. 오류 처리
+
+- 존재하지 않는 `product_id`는 공개 API에서 `404 NOT_FOUND`로 응답하고 다른 상품 존재 여부를
+  메시지에 노출하지 않는다.
+- 요청의 정의되지 않은 `product_name` 필드는 `422`로 거부한다.
+- 클라이언트가 관리자 생성 요청에서 ID를 지정해 충돌을 유발하지 못하도록 서버 발급 원칙을 적용한다.
+- 로그와 metric에는 토큰·개인정보를 넣지 않는다. `product_id`, `status_code`, request ID는 허용한다.
+
+### 12.4. 백엔드 완료 조건
+
+- DB migration upgrade와 downgrade 또는 안전한 롤백 절차가 테스트된다.
+- 필수 ID 요청과 상품명 식별 요청 거부 contract test가 모두 통과한다.
+- 상품명 변경 전 발급한 견적이 ID 기준으로 검증되며 정책에 맞게 성공하거나 명시적 409가 된다.
+- 동시에 같은 상품을 견적·주문할 때 ID 기준 unique/FK/행 잠금이 유지된다.
+- 모든 상태 전이가 허용된 `status_code`만 저장하고 한국어 표시 문구 변경이 로직에 영향을 주지 않는다.
+- 프런트와 백엔드를 함께 실행한 smoke test가 상품 조회 → ID 견적 → 주문 → 상태 조회를 검증한다.
+
+프런트의 Product·OrderItem·QuoteLine·OrderStatus Zod schema와 API 요청도 최초 배포부터
+`product_id`, `status_code`만 분기 기준으로 사용한다.

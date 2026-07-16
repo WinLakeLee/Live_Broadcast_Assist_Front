@@ -4,6 +4,18 @@
 
 ## 📌 주요 변경 내역 (Git History 요약)
 
+### 2026-07-16 — API 2.0, feature 경계, 국제화·테마 기반
+
+- API 계약 2.0.0에 맞춰 상품·견적·주문의 식별자를 `product_name`에서 불변
+  `product_id`로 전환하고, 주문·결제 UI 분기는 한국어 문구가 아닌 `status_code`를 사용한다.
+- `src/features` 아래에 checkout, offers, orders, admin-products, preferences 도메인과
+  표시 컴포넌트를 분리했다. 페이지 컴포넌트는 API orchestration과 화면 조합만 담당한다.
+- typed 한국어/영어 message 사전과 locale provider를 추가했다. 공통 셸, 상품·제안,
+  주문 상태, 공통 오류·dialog부터 message key를 사용하며 새 언어는 동일 key 사전을 추가한다.
+- `system`, `light`, `dark` 테마를 CSS 의미 토큰으로 제공하고 사용자 선택을
+  `localStorage`에 저장한다. 토큰을 사용하는 공통 Card/Input/Button과 기능 컴포넌트는
+  테마별 하드코딩 없이 확장한다.
+
 ### 2026-07-16 — 마켓플레이스형 상품 관리자와 구매 이용조건
 
 - API 계약 1.7.0에 맞춰 카탈로그 상품, 변형 SKU, 판매자 리스팅, 브랜드/제조사,

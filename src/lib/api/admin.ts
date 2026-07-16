@@ -19,12 +19,6 @@ export const saveAdminProduct = (
   apiRequest("/admin/api/products", productSchema, {
     method: "PUT",
     headers: { "X-Admin-API-Key": key },
-    body: JSON.stringify({
-      ...input,
-      sale_starts_at: input.sale_starts_at || null,
-      sale_ends_at: input.sale_ends_at || null,
-      expected_arrival_date: input.expected_arrival_date || null,
-      arrival_date: input.arrival_date || null,
-    }),
+    body: JSON.stringify(input),
     signal,
   });

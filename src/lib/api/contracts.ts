@@ -67,6 +67,7 @@ export const chatFeedSchema = z.object({
   next_cursor: z.string(),
 });
 export type ChatMessage = z.infer<typeof chatMessageSchema>;
+export type ChatFeed = z.infer<typeof chatFeedSchema>;
 
 export const waitingTicketSchema = z.object({
   enabled: z.boolean(),
@@ -87,6 +88,7 @@ export const waitingStatusSchema = z.object({
 export type WaitingStatus = z.infer<typeof waitingStatusSchema>;
 
 export const productSchema = z.object({
+  product_id: z.string().min(1),
   product_name: z.string(),
   unit_price: z.number().int().positive(),
   stock_limit: z.number().int().nonnegative(),
@@ -144,7 +146,7 @@ export type Product = z.infer<typeof productSchema>;
 export const productsSchema = z.object({ products: z.array(productSchema) });
 
 export const orderItemSchema = z.object({
-  product_name: z.string(),
+  product_id: z.string().min(1),
   quantity: z.number().int().positive(),
 });
 export type OrderItem = z.infer<typeof orderItemSchema>;
@@ -160,6 +162,7 @@ export const quoteSchema = z.object({
   expires_at: z.string().min(1),
   lines: z.array(
     z.object({
+      product_id: z.string().min(1),
       product_name: z.string(),
       quantity: z.number().int().positive(),
       unit_price: z.number().nonnegative(),
@@ -180,7 +183,45 @@ export const orderCreatedSchema = z.object({
 });
 export type OrderCreatedData = z.infer<typeof orderCreatedSchema>;
 
+export const paymentMethodsSchema = z.object({
+  methods: z.array(
+    z.object({
+      provider: z.string(),
+      enabled: z.boolean(),
+      flow: z.string(),
+    }),
+  ),
+});
+export const paymentAttemptSchema = z
+  .object({
+    provider: z.string(),
+    flow: z.string(),
+    payment_attempt_id: z.string(),
+    merchant_order_id: z.string(),
+    amount: z.number().nonnegative(),
+    expires_at: z.string(),
+  })
+  .loose();
+
+export const offerCreatedSchema = z.object({
+  offer_reference: z.string(),
+  offer_token: z.string(),
+  product_id: z.string().min(1),
+  product_name: z.string(),
+  purchase_method: z.enum(["auction", "reverse_auction", "blind_auction"]),
+  amount: z.number().int().nonnegative(),
+  quantity: z.number().int().positive(),
+  status: z.literal("accepted"),
+  sale_ends_at: z.string(),
+});
+export const offerStatusSchema = z.object({
+  amount: z.number().int().nonnegative(),
+  quantity: z.number().int().positive(),
+  result: z.enum(["pending", "won", "lost"]),
+});
+
 export const depositorResultSchema = z.object({
+  status_code: z.string().min(1),
   status: z.string(),
   expected_amount: z.number(),
   paid_amount: z.number(),
@@ -201,22 +242,23 @@ const courierSchema = z.object({
 
 export const orderStatusSchema = z.object({
   order_reference: z.string(),
+  status_code: z.string().min(1),
   status: z.string(),
   created_at: z.string(),
   buyer_name: z.string(),
   phone: z.string(),
   address: z.string(),
   expected_amount: z.number(),
-  promotion_id: z.string(),
-  discount_amount: z.number(),
   paid_amount: z.number(),
   difference: z.number(),
   courier: courierSchema,
   items: z.array(
     z.object({
+      product_id: z.string().min(1),
       product_name: z.string(),
       quantity: z.number().int(),
       price: z.number(),
+      status_code: z.string().min(1),
       status: z.string(),
       cancellation_reason: z.string(),
       tracking_number: z.string(),
@@ -231,6 +273,7 @@ export type TicketCredentials = {
   ticketToken: string;
 };
 export type AdminProductInput = {
+  product_id: string;
   product_name: string;
   unit_price: number;
   stock_limit: number;

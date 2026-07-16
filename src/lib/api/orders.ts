@@ -1,8 +1,11 @@
 import { apiRequest, ticketHeaders } from "./client";
+import { z } from "zod";
 import {
   depositorResultSchema,
   orderCreatedSchema,
   orderStatusSchema,
+  paymentAttemptSchema,
+  paymentMethodsSchema,
   quoteSchema,
   type OrderItem,
   type StockPolicy,
@@ -73,4 +76,41 @@ export const getOrderStatus = (
     `/orders/${encodeURIComponent(reference)}/status`,
     orderStatusSchema,
     { headers: { "X-Order-Token": token }, signal },
+  );
+
+export const getPaymentMethods = (signal?: AbortSignal) =>
+  apiRequest("/payments/methods", paymentMethodsSchema, { signal });
+
+export const startPayment = (
+  reference: string,
+  token: string,
+  provider: string,
+  signal?: AbortSignal,
+) =>
+  apiRequest(
+    `/orders/${encodeURIComponent(reference)}/payments`,
+    paymentAttemptSchema,
+    {
+      method: "POST",
+      headers: { "X-Order-Token": token },
+      body: JSON.stringify({ provider }),
+      signal,
+    },
+  );
+
+export const updatePushToken = (
+  reference: string,
+  token: string,
+  pushToken: string,
+  signal?: AbortSignal,
+) =>
+  apiRequest(
+    `/orders/${encodeURIComponent(reference)}/push-token`,
+    z.object({}),
+    {
+      method: "POST",
+      headers: { "X-Order-Token": token },
+      body: JSON.stringify({ push_token: pushToken }),
+      signal,
+    },
   );

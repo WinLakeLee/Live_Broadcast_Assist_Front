@@ -1,5 +1,6 @@
 import type {
   OrderCreatedData,
+  OrderItem,
   QuoteData,
   StockPolicy,
   WaitingTicket,
@@ -10,7 +11,7 @@ const REVIEW_KEY = "live-purchase:review";
 const DRAFT_KEY = "live-purchase:draft";
 export type StoredOrder = OrderCreatedData;
 export type PurchaseDraft = {
-  items: Array<{ product_name: string; quantity: number }>;
+  items: OrderItem[];
   buyerName: string;
   phone: string;
   address: string;

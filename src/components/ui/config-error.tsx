@@ -1,11 +1,16 @@
+"use client";
+
+import { useI18n } from "@/features/preferences/preferences-provider";
+
 export function ConfigError({ message }: { message: string }) {
+  const { t } = useI18n();
   return (
     <main className="shell">
       <section className="card error-card" role="alert">
-        <span className="eyebrow">설정 오류</span>
-        <h1>서비스를 시작할 수 없습니다</h1>
+        <span className="eyebrow">{t("config.eyebrow")}</span>
+        <h1>{t("config.title")}</h1>
         <p>{message}</p>
-        <p>운영 담당자에게 환경변수 설정을 요청해 주세요.</p>
+        <p>{t("config.help")}</p>
       </section>
     </main>
   );

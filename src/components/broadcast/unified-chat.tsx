@@ -12,7 +12,7 @@ import {
   postChatMessage,
   reportChatMessage,
 } from "@/lib/api/chat";
-import type { ChatSession } from "@/lib/api/contracts";
+import type { ChatFeed, ChatSession } from "@/lib/api/contracts";
 import { ApiError } from "@/lib/api/errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,16 +36,24 @@ function loadSession(): ChatSession | null {
 
 export function UnifiedChat({ youtubeEnabled }: { youtubeEnabled: boolean }) {
   const queryClient = useQueryClient();
-  const [session, setSession] = useState<ChatSession | null>(null);
+  const [session, setSession] = useState<ChatSession | null>(() =>
+    typeof window === "undefined" ? null : loadSession(),
+  );
   const [nickname, setNickname] = useState("");
   const [message, setMessage] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => setSession(loadSession()), []);
-
   const feed = useQuery({
     queryKey: ["combined-chat"],
-    queryFn: ({ signal }) => getChatMessages(signal),
+    queryFn: async ({ signal }) => {
+      const previous = queryClient.getQueryData<ChatFeed>(["combined-chat"]);
+      const page = await getChatMessages(previous?.next_cursor ?? "", signal);
+      if (!previous) return page;
+      const messages = new Map(
+        [...previous.messages, ...page.messages].map((item) => [item.message_id, item]),
+      );
+      return { ...page, messages: [...messages.values()].slice(-100) };
+    },
     refetchInterval: 2_000,
     retry: 1,
   });

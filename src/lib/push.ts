@@ -3,7 +3,8 @@ export type PushTokenDetail = { token: string };
 export async function requestPushToken(
   timeoutMs = 5_000,
 ): Promise<string | null> {
-  if (typeof window === "undefined" || !("Notification" in window)) return null;
+  if (typeof window === "undefined" || typeof window.Notification === "undefined")
+    return null;
   const permission = await Notification.requestPermission();
   if (permission !== "granted") return null;
   return new Promise((resolve) => {
