@@ -15,6 +15,7 @@ export type Draft = {
   phone: string;
   address: string;
   stockPolicy: StockPolicy;
+  couponCode: string;
 };
 type BaseData = {
   ticket: TicketCredentials;

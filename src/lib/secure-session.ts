@@ -15,6 +15,7 @@ export type PurchaseDraft = {
   phone: string;
   address: string;
   stockPolicy: StockPolicy;
+  couponCode: string;
 };
 export type StoredReview = { quote: QuoteData; draft: PurchaseDraft };
 const storage = () =>

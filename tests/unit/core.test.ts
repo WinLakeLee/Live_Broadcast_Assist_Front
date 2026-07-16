@@ -1,6 +1,7 @@
 import { afterEach,describe,expect,it,vi } from "vitest";
 import { z } from "zod";
 import { apiRequest } from "@/lib/api/client";
+import { broadcastSchema } from "@/lib/api/contracts";
 import { parseRetryAfter } from "@/lib/api/errors";
 import { describeDifference,formatMoney } from "@/lib/format";
 import { initialPurchaseState,purchaseReducer,type Draft } from "@/hooks/use-purchase-machine";
@@ -11,10 +12,12 @@ import { getPublicEnv } from "@/lib/env";
 
 afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs()});
 describe("운영 보안 설정",()=>{
+  it("YouTube 영상과 채팅 iframe만 CSP에 허용한다",()=>{const frame=buildContentSecurityPolicy("test-nonce").split("; ").find(value=>value.startsWith("frame-src"));expect(frame).toContain("https://www.youtube.com");expect(frame).toContain("https://www.youtube-nocookie.com");expect(frame).not.toContain("*")});
   it("script CSP는 nonce를 요구하고 unsafe-inline을 허용하지 않는다",()=>{const script=buildContentSecurityPolicy("test-nonce").split("; ").find(value=>value.startsWith("script-src"));expect(script).toContain("'nonce-test-nonce'");expect(script).toContain("'strict-dynamic'");expect(script).not.toContain("'unsafe-inline'")});
   it("운영 API의 HTTP 주소를 거부한다",()=>{vi.stubEnv("NODE_ENV","production");vi.stubEnv("NEXT_PUBLIC_ORDER_API_BASE_URL","http://orders.example.test");vi.stubEnv("NEXT_PUBLIC_TURNSTILE_SITE_KEY","site-key");expect(getPublicEnv()).toMatchObject({valid:false,error:"운영 환경의 주문 API 주소는 HTTPS여야 합니다."})});
 });
 describe("API 계약",()=>{
+  it("영상과 채팅의 YouTube ID 불일치를 거부한다",()=>{const value={platform:"youtube",video_id:"video-a",embed_url:"https://www.youtube-nocookie.com/embed/video-a",chat_embed_url:"https://www.youtube.com/live_chat?v=video-b&embed_domain=shop.example.com",watch_url:"https://www.youtube.com/watch?v=video-a",chat:{provider:"youtube",mode:"embedded_live_chat",video_id:"video-b",synchronized_with_video:true,mobile_web_embed:false},capabilities:{video_embed:true,chat_embed:true,chat_embed_mobile_web:false,site_checkout:true}};expect(()=>broadcastSchema.parse(value)).toThrow()});
   it("성공 envelope를 검증한다",async()=>{vi.stubGlobal("fetch",vi.fn().mockResolvedValue(new Response(JSON.stringify({status:"success",data:{value:3}}),{headers:{"Content-Type":"application/json"}})));await expect(apiRequest("/test",z.object({value:z.number()}))).resolves.toEqual({value:3})});
   it("오류와 Retry-After를 보존한다",async()=>{vi.stubGlobal("fetch",vi.fn().mockResolvedValue(new Response(JSON.stringify({status:"error",code:"RATE",message:"잠시 후"}),{status:429,headers:{"Content-Type":"application/json","Retry-After":"7"}})));await expect(apiRequest("/test",z.object({}))).rejects.toMatchObject({httpStatus:429,retryAfter:7})});
   it("JSON 아닌 응답을 거부한다",async()=>{vi.stubGlobal("fetch",vi.fn().mockResolvedValue(new Response("<html/>",{status:500,headers:{"Content-Type":"text/html"}})));await expect(apiRequest("/test",z.object({}))).rejects.toMatchObject({code:"NON_JSON_RESPONSE"})});

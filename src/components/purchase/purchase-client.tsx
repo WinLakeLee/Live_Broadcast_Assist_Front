@@ -32,6 +32,7 @@ const defaults: BuyerForm = {
   phone: "",
   address: "",
   stock_policy: "partial",
+  coupon_code: "",
   privacy_agreed: false as true,
   policy_agreed: false as true,
 };
@@ -55,6 +56,7 @@ export function PurchaseClient() {
           phone: savedDraft.phone,
           address: savedDraft.address,
           stock_policy: savedDraft.stockPolicy,
+          coupon_code: savedDraft.couponCode ?? "",
           privacy_agreed: true,
           policy_agreed: true,
         }
@@ -71,6 +73,7 @@ export function PurchaseClient() {
       phone: values.phone,
       address: values.address,
       stockPolicy: values.stock_policy,
+      couponCode: values.coupon_code,
     };
   }, [form, quantities]);
 
@@ -121,7 +124,7 @@ export function PurchaseClient() {
   const { mutate: doQuote, isPending: isQuoting } = useMutation({
     mutationFn: async ({ draft, signal }: { draft: Draft; signal: AbortSignal }) => {
       if (!("ticket" in state)) throw new Error("No ticket");
-      return getQuote({ stock_policy: draft.stockPolicy, items: draft.items }, state.ticket, signal);
+      return getQuote({ stock_policy: draft.stockPolicy, coupon_code: draft.couponCode, items: draft.items }, state.ticket, signal);
     },
     onSuccess: (quote, { draft }) => {
       savePurchaseDraft(draft);
@@ -312,6 +315,23 @@ export function PurchaseClient() {
                 <p id="address-error" className="text-sm text-red-500">
                   {form.formState.errors.address.message}
                 </p>
+              )}
+            </div>
+
+            <div className="space-y-4 pt-4 border-t border-slate-100">
+              <Label htmlFor="coupon_code">쿠폰 코드 (선택)</Label>
+              <Input
+                id="coupon_code"
+                autoComplete="off"
+                placeholder="WELCOME10"
+                {...form.register("coupon_code", {
+                  onChange: (event) => {
+                    event.target.value = event.target.value.toUpperCase();
+                  },
+                })}
+              />
+              {form.formState.errors.coupon_code && (
+                <p className="text-sm text-red-500">{form.formState.errors.coupon_code.message}</p>
               )}
             </div>
 

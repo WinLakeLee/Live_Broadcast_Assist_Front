@@ -1,4 +1,6 @@
 const turnstileOrigin = "https://challenges.cloudflare.com";
+const youtubeOrigin = "https://www.youtube.com";
+const youtubeNoCookieOrigin = "https://www.youtube-nocookie.com";
 
 function apiOrigin() {
   try {
@@ -19,7 +21,7 @@ export function buildContentSecurityPolicy(nonce: string) {
     "img-src 'self' data:",
     "font-src 'self'",
     `connect-src 'self' ${apiOrigin()} ${turnstileOrigin}`,
-    `frame-src ${turnstileOrigin}`,
+    `frame-src ${turnstileOrigin} ${youtubeOrigin} ${youtubeNoCookieOrigin}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

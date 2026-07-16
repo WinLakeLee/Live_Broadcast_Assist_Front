@@ -74,6 +74,8 @@ export function ReviewClient({ nonce }: { nonce?: string }) {
           address: review.draft.address,
           push_token: pushToken,
           stock_policy: review.draft.stockPolicy,
+          coupon_code: review.draft.couponCode,
+          quoted_subtotal: review.quote.subtotal,
           quoted_amount: review.quote.payment_amount,
           quote_token: review.quote.quote_token,
           captcha_token: captcha,
@@ -210,6 +212,16 @@ export function ReviewClient({ nonce }: { nonce?: string }) {
                 : "하나라도 부족하면 전체 취소"}
             </strong>
           </div>
+          <div className="flex justify-between items-center py-5 border-b border-slate-100 text-xl font-black">
+            <span>상품 금액</span>
+            <strong>{formatMoney(review.quote.subtotal)}</strong>
+          </div>
+          {review.quote.discount_amount > 0 && (
+            <div className="flex justify-between items-center py-4 border-b border-slate-100 text-green-700">
+              <span>쿠폰·행사 할인</span>
+              <strong>-{formatMoney(review.quote.discount_amount)}</strong>
+            </div>
+          )}
           <div className="flex justify-between items-center py-5 border-b border-slate-100 text-xl font-black">
             <span>최종 입금 예정액</span>
             <strong className="text-[#e94d2f] text-2xl">{formatMoney(review.quote.payment_amount)}</strong>

@@ -10,7 +10,7 @@ import {
 } from "./contracts";
 
 export const getQuote = (
-  input: { stock_policy: StockPolicy; items: OrderItem[] },
+  input: { stock_policy: StockPolicy; coupon_code: string; items: OrderItem[] },
   ticket: TicketCredentials,
   signal?: AbortSignal,
 ) =>
@@ -28,6 +28,8 @@ export const createOrder = (
     push_token: string;
     stock_policy: StockPolicy;
     quoted_amount: number;
+    quoted_subtotal: number;
+    coupon_code: string;
     quote_token: string;
     captcha_token: string;
     items: OrderItem[];
