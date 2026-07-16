@@ -1,6 +1,6 @@
 # Live Broadcast Assist 공통 API 계약
 
-- 계약 버전: `2.0.0`
+- 계약 버전: `2.0.1`
 - 기준일: `2026-07-16`
 - 기준 저장소: `Live_Broadcast_Assist/docs/api_contract.md`
 - 적용 대상: FastAPI 백엔드와 `Live_Broadcast_Assist_Front` Next.js 프런트
@@ -14,6 +14,13 @@
 - 주문·결제·품목 상태에 기계 판독용 `status_code`를 추가하고 한국어 `status`는 표시용으로 유지한다.
 - 상품·견적·주문·제안 요청은 `product_id`만 식별자로 사용한다.
 - 상품명 기반 제안 endpoint와 상품명 기반 요청 호환 계층은 제공하지 않는다.
+
+### 2.0.1 변경 요약
+
+- 프런트엔드 연동 점검에서 확인된 관리자 선택 날짜, 경매 설정, 구매 제안 UI,
+  `product_id` 검증 및 실제 서버 smoke test 완료 조건을 명시한다.
+- 요청에 정의되지 않은 `product_name`을 `product_id`와 함께 보내도 `422`로 거부한다는
+  2.0.0 규칙에 맞게 계약 검증 체크리스트의 상충 문구를 바로잡는다.
 
 ## 1. 변경 규칙
 
@@ -675,6 +682,9 @@ API 로직과 프런트 분기는 `status_code`만 사용한다. `status`는 사
 - 생성 요청은 `product_id`를 생략하거나 빈 문자열로 보낸다. 서버가 ID를 발급해 응답한다.
 - 수정 요청은 조회 응답에서 받은 `product_id`를 그대로 보낸다. 서버는 ID로 수정 대상을 찾는다.
 - 클라이언트가 임의 생성한 ID, 다른 상품의 ID 재사용, 발급 후 ID 변경은 `422` 또는 `409`로 거부한다.
+- `sale_starts_at`, `sale_ends_at` 같은 선택 datetime과 `expected_arrival_date`, `arrival_date` 같은
+  선택 date가 비어 있으면 요청에서 생략하거나 JSON `null`로 보낸다. 빈 문자열은 유효한
+  date/datetime이 아니므로 보내지 않는다. 응답의 미설정 날짜는 기존 Product 표현대로 빈 문자열이다.
 
 상품 저장은 기존 체크아웃용 `products`와 카탈로그 상품, 변형 SKU, 판매자 리스팅,
 브랜드, 계층형 카테고리, 이미지/속성, 창고별 재고를 한 트랜잭션에서 함께 갱신한다.
@@ -737,7 +747,7 @@ API 로직과 프런트 분기는 `status_code`만 사용한다. `status`는 사
 - 모든 상품·견적 line·주문 품목 응답에 동일한 `product_id`가 이어지는지 검증한다.
 - 상품명을 변경한 뒤에도 기존 `product_id`로 견적·주문·제안 조회가 성공하는지 검증한다.
 - 주문·입금자·품목 응답의 `status_code`가 허용된 code이고 `status`가 비어 있지 않은지 검증한다.
-- `product_id`와 `product_name`이 함께 온 요청은 ID를 우선하며 이름 변경 때문에 거부하지 않는지 검증한다.
+- `product_id` 식별 요청에 정의되지 않은 `product_name`을 함께 보내면 `422`로 거부하는지 검증한다.
 - 관리자 상품 단가·재고·표시순서 경계값이 백엔드와 프런트에서 일치한다.
 - 로컬 또는 CI smoke test가 mock 없이 FastAPI와 Next.js를 함께 실행해 상품 조회 → 견적까지 확인한다.
 
@@ -810,3 +820,31 @@ API 로직과 프런트 분기는 `status_code`만 사용한다. `status`는 사
 
 프런트의 Product·OrderItem·QuoteLine·OrderStatus Zod schema와 API 요청도 최초 배포부터
 `product_id`, `status_code`만 분기 기준으로 사용한다.
+
+## 13. 프런트엔드 연동 개선 및 완료 조건
+
+프런트엔드는 다음 항목을 구현하고 검증하기 전까지 전체 API 연동이 완료된 것으로 표시하지 않는다.
+
+1. **관리자 선택 날짜 정규화**
+   - 상품 저장 전에 빈 선택 date/datetime 입력을 JSON `null`로 변환하거나 요청에서 생략한다.
+   - 빈 날짜를 포함하지 않은 기본 고정가 상품 생성·수정이 `422` 없이 성공하는 테스트를 둔다.
+2. **경매 상품 관리자 입력**
+   - 관리자 화면에서 `purchase_method`, `reserve_price`, `bid_increment`, `sale_starts_at`,
+     `sale_ends_at`을 입력·수정할 수 있어야 한다.
+   - 고정가에는 `purchase_flow=checkout`, 경매 계열에는 `purchase_flow=offer`가 표시되고,
+     경매 필수값 누락은 서버 호출 전에 안내한다.
+3. **구매 제안 사용자 흐름**
+   - `purchase_flow=offer` 상품은 `POST /api/products/by-id/{product_id}/offers`를 실제 호출하고,
+     발급된 `offer_reference`로 `GET /api/purchase-offers/{offer_reference}` 상태를 조회한다.
+   - 제안 가능 수량·가격 검증, 마감·재고·존재하지 않는 상품 오류를 사용자에게 구분해 표시한다.
+4. **상품 수정과 식별자 검증**
+   - 수정 화면은 불변 `product_id`로 대상을 유지하면서 `product_name` 변경을 허용한다.
+   - 프런트 Zod schema는 서버와 같은 `^prd_[A-Za-z0-9_-]{16,60}$` 규칙으로 외부 입력과
+     세션 복원 값을 검증한다. 서버가 발급한 ID를 클라이언트가 재작성하지 않는다.
+5. **실제 서버 consumer smoke test**
+   - route mock만 사용하는 Playwright 테스트와 별도로 FastAPI와 Next.js를 함께 실행한다.
+   - 최소한 상품 조회 → ID 견적 → 주문 → 상태 조회를 검증하고, 경매 상품은 제안 생성 → 제안 상태
+     조회까지 검증한다. 이 smoke test가 CI 또는 배포 전 절차에서 통과해야 한다.
+6. **문서와 fixture 정리**
+   - 프런트 설명 문서와 테스트 fixture에서 요청 식별자로 사용하는 `product_name` 예시를 제거한다.
+   - 상태 분기는 `status` 표시 문자열이 아니라 `status_code`만 사용한다.

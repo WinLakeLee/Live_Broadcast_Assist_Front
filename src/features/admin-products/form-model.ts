@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { AdminProductInput, Product } from "@/lib/api/contracts";
+import { productIdSchema, type AdminProductInput, type Product } from "@/lib/api/contracts";
 
 function isStringRecord(value: string) {
   try {
@@ -19,7 +19,7 @@ function isStringRecord(value: string) {
 }
 
 export const adminProductFormSchema = z.object({
-  product_id: z.string(),
+  product_id: z.union([z.literal(""), productIdSchema]),
   product_name: z.string().trim().min(1, "상품명을 입력해 주세요."),
   unit_price: z.number().int().positive("단가는 1원 이상이어야 합니다."),
   stock_limit: z.number().int().nonnegative(),
@@ -88,6 +88,19 @@ export const adminProductFormSchema = z.object({
     .max(100)
     .regex(/^[A-Za-z0-9_-]+$/),
   inbound_quantity: z.number().int().nonnegative(),
+}).superRefine((value, context) => {
+  if (value.purchase_method === "fixed_price") return;
+  if (value.bid_increment <= 0) {
+    context.addIssue({ code: "custom", path: ["bid_increment"], message: "경매 입찰 단위는 1원 이상이어야 합니다." });
+  }
+  if (!value.sale_starts_at || !value.sale_ends_at) {
+    context.addIssue({ code: "custom", path: ["sale_starts_at"], message: "경매 시작·종료 시각을 입력해 주세요." });
+  } else if (new Date(value.sale_ends_at) <= new Date(value.sale_starts_at)) {
+    context.addIssue({ code: "custom", path: ["sale_ends_at"], message: "종료 시각은 시작 시각보다 늦어야 합니다." });
+  }
+  if (value.purchase_method === "reverse_auction" && value.reserve_price >= value.unit_price) {
+    context.addIssue({ code: "custom", path: ["reserve_price"], message: "역경매 하한가는 시작가보다 낮아야 합니다." });
+  }
 });
 
 export type AdminProductForm = z.infer<typeof adminProductFormSchema>;
@@ -140,8 +153,8 @@ export function productToAdminForm(product?: Product): AdminProductForm {
     purchase_method: product.purchase_method,
     reserve_price: product.reserve_price,
     bid_increment: product.bid_increment,
-    sale_starts_at: product.sale_starts_at,
-    sale_ends_at: product.sale_ends_at,
+    sale_starts_at: optionalAuctionDateTime(product.sale_starts_at),
+    sale_ends_at: optionalAuctionDateTime(product.sale_ends_at),
     sku: product.sku,
     category_major: product.category_major,
     category_minor: product.category_minor,
@@ -166,10 +179,25 @@ export function productToAdminForm(product?: Product): AdminProductForm {
   };
 }
 
+function optionalAuctionDateTime(value: string) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const offset = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+}
+
 export function adminFormToInput(form: AdminProductForm): AdminProductInput {
   const { option_values_json, attributes_json, image_urls_text, ...base } = form;
+  const isAuction = base.purchase_method !== "fixed_price";
   return {
     ...base,
+    reserve_price: isAuction ? base.reserve_price : 0,
+    bid_increment: isAuction ? base.bid_increment : 0,
+    sale_starts_at: isAuction && base.sale_starts_at ? new Date(base.sale_starts_at).toISOString() : null,
+    sale_ends_at: isAuction && base.sale_ends_at ? new Date(base.sale_ends_at).toISOString() : null,
+    expected_arrival_date: base.expected_arrival_date || null,
+    arrival_date: base.arrival_date || null,
     option_values: JSON.parse(option_values_json || "{}") as Record<string, string>,
     attributes: JSON.parse(attributes_json || "{}") as Record<string, string>,
     image_urls: image_urls_text

@@ -36,9 +36,30 @@ describe("P1 feature 도메인 경계", () => {
     expect(adminProductFormSchema.safeParse(form).success).toBe(true);
     expect(adminFormToInput(form)).toMatchObject({
       catalog_item_id: "catalog-1",
+      sale_starts_at: null,
+      sale_ends_at: null,
+      expected_arrival_date: null,
+      arrival_date: null,
       option_values: { 색상: "빨강" },
       attributes: { 원산지: "한국" },
       image_urls: ["https://example.com/product.png"],
+    });
+  });
+
+  it("관리자 경매 설정을 timezone 포함 API 값으로 변환한다", () => {
+    const form = productToAdminForm(makeProduct());
+    const parsed = adminProductFormSchema.parse({
+      ...form,
+      purchase_method: "auction",
+      bid_increment: 1_000,
+      sale_starts_at: "2026-07-16T10:00",
+      sale_ends_at: "2026-07-16T11:00",
+    });
+    expect(adminFormToInput(parsed)).toMatchObject({
+      purchase_method: "auction",
+      bid_increment: 1_000,
+      sale_starts_at: expect.stringMatching(/(?:Z|[+-]\d{2}:\d{2})$/),
+      sale_ends_at: expect.stringMatching(/(?:Z|[+-]\d{2}:\d{2})$/),
     });
   });
 

@@ -8,7 +8,7 @@ export const ok = (data: unknown) => ({
 });
 
 export const makeProduct = (overrides: Partial<Product> = {}): Product => ({
-  product_id: "prd-test-product",
+  product_id: "prd_0123456789ABCDEF",
   product_name: "테스트 상품",
   unit_price: 12_000,
   stock_limit: 10,
@@ -44,7 +44,7 @@ export const makeQuote = (overrides: Partial<QuoteData> = {}): QuoteData => ({
   expires_at: "2099-01-01T00:00:00Z",
   lines: [
     {
-      product_id: "prd-test-product",
+      product_id: "prd_0123456789ABCDEF",
       product_name: "테스트 상품",
       quantity: 1,
       unit_price: 12_000,

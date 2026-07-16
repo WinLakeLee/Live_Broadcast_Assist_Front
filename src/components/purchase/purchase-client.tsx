@@ -216,6 +216,7 @@ export function PurchaseClient() {
             products={state.products}
             quantities={quantities}
             onQuantityChange={quantityChange}
+            ticket={state.ticket}
           />
         </CardContent>
       </Card>

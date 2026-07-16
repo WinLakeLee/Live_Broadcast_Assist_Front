@@ -72,7 +72,7 @@ describe("P1 API 모듈 회귀", () => {
     respond({
       offer_reference: "OFFER-REF",
       offer_token: "offer-token",
-      product_id: "prd-test-product",
+      product_id: "prd_0123456789ABCDEF",
       product_name: "테스트 상품",
       purchase_method: "auction",
       amount: 15_000,

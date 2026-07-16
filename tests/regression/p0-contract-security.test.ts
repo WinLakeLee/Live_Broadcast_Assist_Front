@@ -55,13 +55,13 @@ describe("P0 계약 스키마 회귀", () => {
     expect(waitingStatusSchema.parse({ enabled: true, status: "processing", position: 0, retry_after_seconds: 0 })).toBeTruthy();
     expect(productSchema.parse(makeProduct()).sku).toBe("SKU-TEST");
     expect(productsSchema.parse({ products: [makeProduct()] }).products).toHaveLength(1);
-    expect(orderItemSchema.parse({ product_id: "prd-product", quantity: 1 })).toBeTruthy();
+    expect(orderItemSchema.parse({ product_id: "prd_0123456789ABCDEF", quantity: 1 })).toBeTruthy();
     expect(stockPolicySchema.parse("all_or_nothing")).toBe("all_or_nothing");
     expect(quoteSchema.parse(makeQuote()).quote_token).toBe("quote-token");
     expect(orderCreatedSchema.parse({ order_reference: "R", order_token: "T", payment_amount: 1, accepted_count: 1, cancelled_count: 0 })).toBeTruthy();
     expect(paymentMethodsSchema.parse({ methods: [{ provider: "bank_transfer", enabled: true, flow: "manual_transfer" }] })).toBeTruthy();
     expect(paymentAttemptSchema.parse({ provider: "bank_transfer", flow: "manual_transfer", payment_attempt_id: "A", merchant_order_id: "M", amount: 1, expires_at: "2099", next_action: {} })).toHaveProperty("next_action");
-    expect(offerCreatedSchema.parse({ offer_reference: "R", offer_token: "T", product_id: "prd-product", product_name: "상품", purchase_method: "auction", amount: 1, quantity: 1, status: "accepted", sale_ends_at: "2099" })).toBeTruthy();
+    expect(offerCreatedSchema.parse({ offer_reference: "R", offer_token: "T", product_id: "prd_0123456789ABCDEF", product_name: "상품", purchase_method: "auction", amount: 1, quantity: 1, status: "accepted", sale_ends_at: "2099" })).toBeTruthy();
     expect(offerStatusSchema.parse({ amount: 1, quantity: 1, result: "won" }).result).toBe("won");
     expect(depositorResultSchema.parse({ status_code: "payment_pending", status: "결제대기", expected_amount: 1, paid_amount: 0, difference: 1 })).toBeTruthy();
     expect(orderStatusSchema.parse(makeOrderStatus()).order_reference).toBe("ORDER-REF");
@@ -69,7 +69,7 @@ describe("P0 계약 스키마 회귀", () => {
 
   it("금액·수량·열거형·배송 URL의 위험한 경계값을 거부한다", () => {
     expect(() => productSchema.parse(makeProduct({ unit_price: 0 }))).toThrow();
-    expect(() => orderItemSchema.parse({ product_id: "prd-product", quantity: 0 })).toThrow();
+    expect(() => orderItemSchema.parse({ product_id: "prd_0123456789ABCDEF", quantity: 0 })).toThrow();
     expect(() => stockPolicySchema.parse("best_effort")).toThrow();
     expect(() => orderStatusSchema.parse(makeOrderStatus({ courier: { provider: "x", display_name: "x", tracking_url: "http://unsafe.example" } }))).toThrow();
     expect(() => waitingStatusSchema.parse({ enabled: true, status: "ready", position: -1, retry_after_seconds: 0 })).toThrow();

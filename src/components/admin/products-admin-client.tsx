@@ -178,7 +178,6 @@ export function ProductsAdminClient() {
             <label htmlFor="product_name">상품명</label>
             <input
               id="product_name"
-              readOnly={Boolean(selected)}
               {...form.register("product_name")}
             />
           </div>
@@ -207,6 +206,31 @@ export function ProductsAdminClient() {
               type="number"
               {...form.register("display_order", { valueAsNumber: true })}
             />
+          </div>
+          <div className="field">
+            <label htmlFor="purchase_method">구매 방식</label>
+            <select id="purchase_method" {...form.register("purchase_method")}>
+              <option value="fixed_price">고정가</option>
+              <option value="auction">경매</option>
+              <option value="reverse_auction">역경매</option>
+              <option value="blind_auction">블라인드 경매</option>
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="reserve_price">예약가/하한가</label>
+            <input id="reserve_price" type="number" min="0" {...form.register("reserve_price", { valueAsNumber: true })} />
+          </div>
+          <div className="field">
+            <label htmlFor="bid_increment">입찰 단위</label>
+            <input id="bid_increment" type="number" min="0" {...form.register("bid_increment", { valueAsNumber: true })} />
+          </div>
+          <div className="field">
+            <label htmlFor="sale_starts_at">판매 시작 시각</label>
+            <input id="sale_starts_at" type="datetime-local" {...form.register("sale_starts_at")} />
+          </div>
+          <div className="field">
+            <label htmlFor="sale_ends_at">판매 종료 시각</label>
+            <input id="sale_ends_at" type="datetime-local" {...form.register("sale_ends_at")} />
           </div>
           <div className="field">
             <label htmlFor="sku">SKU</label>

@@ -145,12 +145,13 @@ describe("P2 공용 UI 회귀", () => {
     expect(onCancel).toHaveBeenCalledTimes(2);
   });
 
-  it("상품 선택기는 고정가 조작과 경매 차단을 분리한다", async () => {
+  it("상품 선택기는 고정가 조작과 경매 제안 입력을 분리한다", async () => {
     const onChange = vi.fn();
     const auction = makeProduct({ product_id: "prd-auction", product_name: "경매", purchase_method: "auction", purchase_flow: "offer" });
     const fixed = makeProduct({ product_id: "prd-fixed", product_name: "고정가", available_quantity: 2 });
-    render(<CheckoutFlow products={[auction, fixed]} quantities={{ "prd-fixed": 1 }} onQuantityChange={onChange} />);
-    expect(screen.getByText(/경매 제안 기능은 현재 사용할 수 없습니다/)).toBeVisible();
+    render(<CheckoutFlow products={[auction, fixed]} quantities={{ "prd-fixed": 1 }} onQuantityChange={onChange} ticket={{ enabled: false, ticketId: "", ticketToken: "" }} />);
+    expect(screen.getByLabelText("제안 금액")).toBeVisible();
+    expect(screen.getByRole("button", { name: "제안 제출" })).toBeEnabled();
     expect(screen.queryByLabelText("경매 수량 늘리기")).not.toBeInTheDocument();
     await userEvent.click(screen.getByLabelText("고정가 수량 줄이기"));
     expect(onChange).toHaveBeenCalledWith("prd-fixed", 0);

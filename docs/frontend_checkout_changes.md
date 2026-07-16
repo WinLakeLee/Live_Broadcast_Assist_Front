@@ -34,7 +34,7 @@ type QuoteData = {
   "quoted_amount": 24000,
   "quote_token": "server_signed_short_lived_quote",
   "captcha_token": "TURNSTILE_RESPONSE_TOKEN",
-  "items": [{"product_name": "상품A", "quantity": 2}]
+  "items": [{"product_id": "prd_01JZ8R7F6K2M4N8Q1T3V5W7X9Y", "quantity": 2}]
 }
 ```
 

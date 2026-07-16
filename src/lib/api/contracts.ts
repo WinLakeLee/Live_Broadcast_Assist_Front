@@ -87,8 +87,12 @@ export const waitingStatusSchema = z.object({
 });
 export type WaitingStatus = z.infer<typeof waitingStatusSchema>;
 
+export const productIdSchema = z
+  .string()
+  .regex(/^prd_[A-Za-z0-9_-]{16,60}$/, "올바른 상품 ID가 아닙니다.");
+
 export const productSchema = z.object({
-  product_id: z.string().min(1),
+  product_id: productIdSchema,
   product_name: z.string(),
   unit_price: z.number().int().positive(),
   stock_limit: z.number().int().nonnegative(),
@@ -146,7 +150,7 @@ export type Product = z.infer<typeof productSchema>;
 export const productsSchema = z.object({ products: z.array(productSchema) });
 
 export const orderItemSchema = z.object({
-  product_id: z.string().min(1),
+  product_id: productIdSchema,
   quantity: z.number().int().positive(),
 });
 export type OrderItem = z.infer<typeof orderItemSchema>;
@@ -162,7 +166,7 @@ export const quoteSchema = z.object({
   expires_at: z.string().min(1),
   lines: z.array(
     z.object({
-      product_id: z.string().min(1),
+      product_id: productIdSchema,
       product_name: z.string(),
       quantity: z.number().int().positive(),
       unit_price: z.number().nonnegative(),
@@ -206,7 +210,7 @@ export const paymentAttemptSchema = z
 export const offerCreatedSchema = z.object({
   offer_reference: z.string(),
   offer_token: z.string(),
-  product_id: z.string().min(1),
+  product_id: productIdSchema,
   product_name: z.string(),
   purchase_method: z.enum(["auction", "reverse_auction", "blind_auction"]),
   amount: z.number().int().nonnegative(),
@@ -254,7 +258,7 @@ export const orderStatusSchema = z.object({
   courier: courierSchema,
   items: z.array(
     z.object({
-      product_id: z.string().min(1),
+      product_id: productIdSchema,
       product_name: z.string(),
       quantity: z.number().int(),
       price: z.number(),
@@ -282,14 +286,14 @@ export type AdminProductInput = {
   purchase_method: Product["purchase_method"];
   reserve_price: number;
   bid_increment: number;
-  sale_starts_at: string;
-  sale_ends_at: string;
+  sale_starts_at: string | null;
+  sale_ends_at: string | null;
   sku: string;
   category_major: string;
   category_minor: string;
   category_detail: string;
-  expected_arrival_date: string;
-  arrival_date: string;
+  expected_arrival_date: string | null;
+  arrival_date: string | null;
   catalog_item_id: string;
   seller_id: string;
   brand_name: string;
