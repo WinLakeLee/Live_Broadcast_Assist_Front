@@ -47,6 +47,7 @@ export async function apiRequest<T>(
       },
     });
     const retryAfter = parseRetryAfter(response.headers.get("Retry-After"));
+    const requestId = response.headers.get("X-Request-ID") ?? undefined;
     const contentType = response.headers.get("Content-Type") ?? "";
     if (!contentType.toLowerCase().includes("application/json"))
       throw new ApiError(
@@ -54,6 +55,7 @@ export async function apiRequest<T>(
         "NON_JSON_RESPONSE",
         "서버 응답 형식이 올바르지 않습니다.",
         retryAfter,
+        requestId,
       );
     let body: unknown;
     try {
@@ -64,9 +66,10 @@ export async function apiRequest<T>(
         "INVALID_JSON",
         "서버 응답을 확인할 수 없습니다.",
         retryAfter,
+        requestId,
       );
     }
-    if (!response.ok) throw safeApiError(response.status, body, retryAfter);
+    if (!response.ok) throw safeApiError(response.status, body, retryAfter, requestId);
     try {
       return envelope(schema).parse(body);
     } catch {
@@ -74,6 +77,8 @@ export async function apiRequest<T>(
         response.status,
         "INVALID_RESPONSE",
         "서버 응답 형식이 올바르지 않습니다.",
+        undefined,
+        requestId,
       );
     }
   } finally {

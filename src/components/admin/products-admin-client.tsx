@@ -1,10 +1,10 @@
 "use client";
 import { useCallback, useState } from "react";
-import { KeyRound, Plus, Save } from "lucide-react";
+import { KeyRound, Plus, Save, Camera } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { AdminProductInput, Product } from "@/lib/api/contracts";
-import { getAdminProducts, saveAdminProduct } from "@/lib/api/admin";
+import { getAdminProducts, saveAdminProduct, identifyProduct } from "@/lib/api/admin";
 import { ApiError } from "@/lib/api/errors";
 import { formatMoney } from "@/lib/format";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -24,6 +24,8 @@ export function ProductsAdminClient() {
   const [pending, setPending] = useState<AdminProductInput>();
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [domain, setDomain] = useState("pokemon");
+  const [identifying, setIdentifying] = useState(false);
   const form = useForm<AdminProductForm>({
     resolver: zodResolver(adminProductFormSchema),
     defaultValues: blankAdminProductForm,
@@ -79,6 +81,29 @@ export function ProductsAdminClient() {
       setBusy(false);
     }
   };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !key) return;
+    setIdentifying(true);
+    setMessage("");
+    try {
+      const res = await identifyProduct(key, file, domain);
+      form.setValue("product_name", res.product_name);
+      form.setValue("category_major", res.category_major);
+      form.setValue("category_minor", res.category_minor);
+      form.setValue("category_detail", res.category_detail);
+      if (res.unit_price !== undefined) form.setValue("unit_price", res.unit_price);
+      if (res.description) form.setValue("description", res.description);
+      if (res.image_urls_text) form.setValue("image_urls_text", res.image_urls_text);
+      setMessage("AI 식별에 성공했습니다. 폼 데이터를 확인해 주세요.");
+    } catch (err) {
+      setMessage("AI 식별에 실패했습니다.");
+    } finally {
+      setIdentifying(false);
+    }
+  };
+
   if (!verified)
     return (
       <section className="card">
@@ -169,6 +194,16 @@ export function ProductsAdminClient() {
       </section>
       <form className="card" onSubmit={prepare}>
         <h2>{selected ? `${selected.product_name} 수정` : "상품 추가"}</h2>
+        <div className="actions" style={{ marginBottom: "1rem" }}>
+          <select value={domain} onChange={(e) => setDomain(e.target.value)} style={{ padding: "0.5rem" }}>
+            <option value="pokemon">포켓몬 카드</option>
+            <option value="yugioh">유희왕 카드</option>
+          </select>
+          <label className="button primary" style={{ cursor: "pointer" }}>
+            <Camera size={17} /> 사진으로 식별 {identifying && "..."}
+            <input type="file" accept="image/*" style={{ display: "none" }} onChange={handleFileUpload} disabled={identifying} />
+          </label>
+        </div>
         <p className="muted">
           예약수량은 조회만 가능하며 총 재고를 예약수량보다 낮출 수 없습니다.
           최종 판정은 서버가 수행합니다.

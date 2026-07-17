@@ -310,3 +310,14 @@ export type AdminProductInput = {
   warehouse_code: string;
   inbound_quantity: number;
 };
+
+export const aiIdentificationSchema = z.object({
+  product_name: z.string(),
+  category_major: z.string(),
+  category_minor: z.string(),
+  category_detail: z.string(),
+  unit_price: z.number().int().nonnegative().optional(),
+  description: z.string().optional(),
+  image_urls_text: z.string().optional(),
+});
+export type AiIdentificationResult = z.infer<typeof aiIdentificationSchema>;

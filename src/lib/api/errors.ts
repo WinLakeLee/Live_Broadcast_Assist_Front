@@ -13,6 +13,7 @@ export class ApiError extends Error {
     public readonly code: string,
     message: string,
     public readonly retryAfter?: number,
+    public readonly requestId?: string,
   ) {
     super(message);
     this.name = "ApiError";
@@ -36,6 +37,7 @@ export function safeApiError(
   status: number,
   body: unknown,
   retryAfter?: number,
+  requestId?: string,
 ): ApiError {
   const parsed = errorEnvelope.safeParse(body);
   const message =
@@ -49,5 +51,6 @@ export function safeApiError(
     parsed.success ? parsed.data.code : "UNEXPECTED_RESPONSE",
     message,
     retryAfter,
+    requestId,
   );
 }
