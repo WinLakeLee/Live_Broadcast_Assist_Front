@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useState } from "react";
 import { KeyRound, Plus, Save, Camera } from "lucide-react";
+import { Select } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { AdminProductInput, Product } from "@/lib/api/contracts";
@@ -195,10 +196,15 @@ export function ProductsAdminClient() {
       <form className="card" onSubmit={prepare}>
         <h2>{selected ? `${selected.product_name} 수정` : "상품 추가"}</h2>
         <div className="actions" style={{ marginBottom: "1rem" }}>
-          <select value={domain} onChange={(e) => setDomain(e.target.value)} style={{ padding: "0.5rem" }}>
-            <option value="pokemon">포켓몬 카드</option>
-            <option value="yugioh">유희왕 카드</option>
-          </select>
+          <Select
+            value={domain}
+            onChange={(val) => setDomain(val)}
+            options={[
+              { value: "pokemon", label: "포켓몬 카드" },
+              { value: "yugioh", label: "유희왕 카드" },
+            ]}
+            triggerClassName="bg-white border-gray-300 rounded text-black font-normal"
+          />
           <label className="button primary" style={{ cursor: "pointer" }}>
             <Camera size={17} /> 사진으로 식별 {identifying && "..."}
             <input type="file" accept="image/*" style={{ display: "none" }} onChange={handleFileUpload} disabled={identifying} />
@@ -244,12 +250,17 @@ export function ProductsAdminClient() {
           </div>
           <div className="field">
             <label htmlFor="purchase_method">구매 방식</label>
-            <select id="purchase_method" {...form.register("purchase_method")}>
-              <option value="fixed_price">고정가</option>
-              <option value="auction">경매</option>
-              <option value="reverse_auction">역경매</option>
-              <option value="blind_auction">블라인드 경매</option>
-            </select>
+            <Select
+              value={form.watch("purchase_method")}
+              onChange={(val) => form.setValue("purchase_method", val as any)}
+              options={[
+                { value: "fixed_price", label: "고정가" },
+                { value: "auction", label: "경매" },
+                { value: "reverse_auction", label: "역경매" },
+                { value: "blind_auction", label: "블라인드 경매" },
+              ]}
+              triggerClassName="bg-white border-gray-300 rounded text-black font-normal"
+            />
           </div>
           <div className="field">
             <label htmlFor="reserve_price">예약가/하한가</label>
@@ -261,10 +272,15 @@ export function ProductsAdminClient() {
           </div>
           <div className="field">
             <label htmlFor="bid_input_mode">입찰 입력 방식</label>
-            <select id="bid_input_mode" {...form.register("bid_input_mode")}>
-              <option value="direct_amount">직접 금액 입력</option>
-              <option value="incremental">호가 자동 계산</option>
-            </select>
+            <Select
+              value={form.watch("bid_input_mode")}
+              onChange={(val) => form.setValue("bid_input_mode", val as any)}
+              options={[
+                { value: "direct_amount", label: "직접 금액 입력" },
+                { value: "incremental", label: "호가 자동 계산" },
+              ]}
+              triggerClassName="bg-white border-gray-300 rounded text-black font-normal"
+            />
           </div>
           <div className="field">
             <label htmlFor="minimum_offer_price">최소 제안가 (0=미설정)</label>
@@ -328,12 +344,17 @@ export function ProductsAdminClient() {
           </div>
           <div className="field">
             <label htmlFor="condition_type">상품 상태</label>
-            <select id="condition_type" {...form.register("condition_type")}>
-              <option value="new">새 상품</option>
-              <option value="used_like_new">중고 - 최상</option>
-              <option value="used_good">중고 - 양호</option>
-              <option value="used_acceptable">중고 - 사용감 있음</option>
-            </select>
+            <Select
+              value={form.watch("condition_type")}
+              onChange={(val) => form.setValue("condition_type", val as any)}
+              options={[
+                { value: "new", label: "새 상품" },
+                { value: "used_like_new", label: "중고 - 최상" },
+                { value: "used_good", label: "중고 - 양호" },
+                { value: "used_acceptable", label: "중고 - 사용감 있음" },
+              ]}
+              triggerClassName="bg-white border-gray-300 rounded text-black font-normal"
+            />
           </div>
           <div className="field">
             <label htmlFor="parent_sku">부모 SKU</label>

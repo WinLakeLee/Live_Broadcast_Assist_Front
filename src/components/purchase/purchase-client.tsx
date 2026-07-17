@@ -9,6 +9,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { StepIndicator } from "@/components/ui/step-indicator";
+import { Select } from "@/components/ui/select";
 import { usePurchaseMachine } from "@/hooks/use-purchase-machine";
 import {
   buyerFormFromDraft,
@@ -277,15 +278,18 @@ export function PurchaseClient() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <select
-                    className="flex w-full rounded-xl border border-border bg-card-muted/30 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary h-10 appearance-none"
-                    {...form.register("address_province", {
-                      onChange: () => form.setValue("address_city", "", { shouldValidate: true })
-                    })}
-                  >
-                    <option value="">도/광역시/특별시 선택</option>
-                    {PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
-                  </select>
+                  <Select
+                    value={form.watch("address_province")}
+                    onChange={(val) => {
+                      form.setValue("address_province", val, { shouldValidate: true });
+                      form.setValue("address_city", "", { shouldValidate: true });
+                    }}
+                    options={[
+                      { value: "", label: "도/광역시/특별시 선택" },
+                      ...PROVINCES.map(p => ({ value: p, label: p }))
+                    ]}
+                    placeholder="도/광역시/특별시 선택"
+                  />
                   {form.formState.errors.address_province && (
                     <p className="text-sm font-medium text-destructive">
                       {form.formState.errors.address_province.message}
@@ -294,14 +298,18 @@ export function PurchaseClient() {
                 </div>
 
                 <div className="space-y-2">
-                  <select
-                    className="flex w-full rounded-xl border border-border bg-card-muted/30 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary h-10 appearance-none disabled:opacity-50"
+                  <Select
                     disabled={!selectedProvince}
-                    {...form.register("address_city")}
-                  >
-                    <option value="">시/군/구 선택</option>
-                    {cities.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                    value={form.watch("address_city")}
+                    onChange={(val) => {
+                      form.setValue("address_city", val, { shouldValidate: true });
+                    }}
+                    options={[
+                      { value: "", label: "시/군/구 선택" },
+                      ...cities.map(c => ({ value: c, label: c }))
+                    ]}
+                    placeholder="시/군/구 선택"
+                  />
                   {form.formState.errors.address_city && (
                     <p className="text-sm font-medium text-destructive">
                       {form.formState.errors.address_city.message}

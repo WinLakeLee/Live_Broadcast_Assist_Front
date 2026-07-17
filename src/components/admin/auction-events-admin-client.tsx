@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Gavel, KeyRound, Plus, ScanText, Trash2 } from "lucide-react";
+import { Select } from "@/components/ui/select";
 
 import type {
   AuctionEventData,
@@ -308,36 +309,34 @@ export function AuctionEventsAdminClient() {
           </div>
           <div className="field">
             <label htmlFor="auction-lot-mode">lot 생성 방식</label>
-            <select
-              id="auction-lot-mode"
+            <Select
               value={lotMode}
-              onChange={(event) => setLotMode(event.target.value as AuctionLotMode)}
-            >
-              {Object.entries(lotModeLabels).map(([mode, label]) => (
-                <option key={mode} value={mode}>
-                  {label}
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setLotMode(val as AuctionLotMode)}
+              options={Object.entries(lotModeLabels).map(([mode, label]) => ({
+                value: mode,
+                label: label
+              }))}
+              triggerClassName="bg-white border-gray-300 rounded text-black font-normal"
+            />
           </div>
         </div>
         {items.map((item, index) => (
           <div className="lookup-grid" key={index}>
             <div className="field">
               <label htmlFor={`event-item-product-${index}`}>상품</label>
-              <select
-                id={`event-item-product-${index}`}
+              <Select
                 value={item.product_id}
-                onChange={(event) => updateItem(index, { product_id: event.target.value })}
-              >
-                <option value="">상품 선택</option>
-                {auctionProducts.map((product) => (
-                  <option key={product.product_id} value={product.product_id}>
-                    {product.product_name} (가용 {product.available_quantity},{" "}
-                    {formatMoney(product.unit_price)})
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => updateItem(index, { product_id: val })}
+                options={[
+                  { value: "", label: "상품 선택" },
+                  ...auctionProducts.map((product) => ({
+                    value: product.product_id,
+                    label: `${product.product_name} (가용 ${product.available_quantity}, ${formatMoney(product.unit_price)})`
+                  }))
+                ]}
+                placeholder="상품 선택"
+                triggerClassName="bg-white border-gray-300 rounded text-black font-normal"
+              />
             </div>
             <div className="field">
               <label htmlFor={`event-item-quantity-${index}`}>수량</label>
