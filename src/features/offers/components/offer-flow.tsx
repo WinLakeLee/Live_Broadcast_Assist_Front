@@ -86,57 +86,104 @@ function OfferCard({ product, ticket }: { product: Product; ticket: TicketCreden
   const quantityInvalid = quantity < 1 || quantity > product.available_quantity;
 
   return (
-    <article className="product-card">
-      <p className="text-sm font-semibold text-[#e94d2f]">{t(offerMethodMessageKey(product.purchase_method))}</p>
-      <h3>{product.product_name}</h3>
-      <div className="price">{t("offers.startPrice", { price: formatMoney(product.unit_price, locale) })}</div>
-      {time.saleEndsAt && (
-        <p className="text-sm text-slate-600" aria-live="polite">
-          {t("offers.remaining", { time: formatRemaining(remaining) })}
-          {time.extensionCount > 0 && ` · ${t("offers.extensionCount", { count: time.extensionCount })}`}
+    <article className="flex flex-col border border-border bg-card-muted/20 rounded-2xl p-6 transition-all hover:border-primary/50">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm font-bold text-primary tracking-wide uppercase">
+          {t(offerMethodMessageKey(product.purchase_method))}
         </p>
-      )}
-      {(product.minimum_offer_price > 0 || product.maximum_offer_price > 0) && (
-        <p className="text-xs text-slate-500">
-          {product.minimum_offer_price > 0 &&
-            t("offers.minPrice", { price: formatMoney(product.minimum_offer_price, locale) })}
-          {product.minimum_offer_price > 0 && product.maximum_offer_price > 0 && " · "}
-          {product.maximum_offer_price > 0 &&
-            t("offers.maxPrice", { price: formatMoney(product.maximum_offer_price, locale) })}
-        </p>
-      )}
-      {incremental ? (
-        <p className="text-sm text-slate-600">{t("offers.incrementalHint")}</p>
-      ) : (
-        <div className="field">
-          <label htmlFor={`offer-amount-${product.product_id}`}>{t("offers.amount")}</label>
-          <input id={`offer-amount-${product.product_id}`} type="number" min="0" value={amount} onChange={(event) => setAmount(Number(event.target.value))} />
+        <span className="text-2xl font-black text-foreground">
+          {t("offers.startPrice", { price: formatMoney(product.unit_price, locale) })}
+        </span>
+      </div>
+      
+      <h3 className="text-xl font-bold text-foreground mb-4">{product.product_name}</h3>
+      
+      <div className="flex flex-col gap-1 mb-4 bg-card border border-border/50 rounded-xl p-3">
+        {time.saleEndsAt && (
+          <p className="text-sm font-semibold text-destructive" aria-live="polite">
+            {t("offers.remaining", { time: formatRemaining(remaining) })}
+            {time.extensionCount > 0 && <span className="text-muted-foreground ml-1 font-normal">· {t("offers.extensionCount", { count: time.extensionCount })}</span>}
+          </p>
+        )}
+        {(product.minimum_offer_price > 0 || product.maximum_offer_price > 0) && (
+          <p className="text-xs text-muted-foreground mt-1">
+            {product.minimum_offer_price > 0 &&
+              t("offers.minPrice", { price: formatMoney(product.minimum_offer_price, locale) })}
+            {product.minimum_offer_price > 0 && product.maximum_offer_price > 0 && " · "}
+            {product.maximum_offer_price > 0 &&
+              t("offers.maxPrice", { price: formatMoney(product.maximum_offer_price, locale) })}
+          </p>
+        )}
+      </div>
+
+      <div className="space-y-4 mb-6">
+        {incremental ? (
+          <p className="text-sm text-muted-foreground bg-primary/10 text-primary p-3 rounded-xl">
+            {t("offers.incrementalHint")}
+          </p>
+        ) : (
+          <div className="space-y-2">
+            <label htmlFor={`offer-amount-${product.product_id}`} className="text-sm font-bold text-foreground">{t("offers.amount")}</label>
+            <input 
+              id={`offer-amount-${product.product_id}`} 
+              type="number" 
+              min="0" 
+              value={amount} 
+              onChange={(event) => setAmount(Number(event.target.value))} 
+              className="w-full rounded-xl border border-border bg-card-muted/30 px-3 py-2 text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            />
+          </div>
+        )}
+        <div className="space-y-2">
+          <label htmlFor={`offer-quantity-${product.product_id}`} className="text-sm font-bold text-foreground">{t("offers.quantity")}</label>
+          <input 
+            id={`offer-quantity-${product.product_id}`} 
+            type="number" 
+            min="1" 
+            max={product.available_quantity} 
+            value={quantity} 
+            onChange={(event) => setQuantity(Number(event.target.value))} 
+            className="w-full rounded-xl border border-border bg-card-muted/30 px-3 py-2 text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2 mt-auto">
+        <button
+          type="button"
+          disabled={busy || closed || quantityInvalid || (!incremental && amount < 0)}
+          onClick={() => submit(incremental ? { quantity } : { amount, quantity })}
+          className="w-full py-3 px-4 bg-primary text-primary-foreground font-bold rounded-xl shadow-md hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+        >
+          {busy ? t("offers.processing") : incremental ? t("offers.bid") : t("offers.submit")}
+        </button>
+        {product.buy_now_price > 0 && (
+          <button
+            type="button"
+            disabled={busy || closed || quantityInvalid}
+            onClick={() => submit({ buy_now: true, quantity })}
+            className="w-full py-3 px-4 border border-border bg-card-muted/30 text-foreground font-bold rounded-xl hover:bg-card-muted/50 transition-colors disabled:opacity-50"
+          >
+            {t("offers.buyNow", { price: formatMoney(product.buy_now_price, locale) })}
+          </button>
+        )}
+        {credentials && (
+          <button 
+            type="button" 
+            disabled={busy} 
+            onClick={refresh}
+            className="w-full py-2 px-4 border border-border bg-transparent text-muted-foreground font-medium rounded-xl hover:text-foreground transition-colors disabled:opacity-50 mt-2"
+          >
+            {t("offers.refresh")}
+          </button>
+        )}
+      </div>
+
+      {message && (
+        <div className="mt-4 p-4 bg-primary/10 border border-primary/20 text-primary font-medium rounded-xl" role="status">
+          {message}
         </div>
       )}
-      <div className="field">
-        <label htmlFor={`offer-quantity-${product.product_id}`}>{t("offers.quantity")}</label>
-        <input id={`offer-quantity-${product.product_id}`} type="number" min="1" max={product.available_quantity} value={quantity} onChange={(event) => setQuantity(Number(event.target.value))} />
-      </div>
-      <button
-        className="button primary"
-        type="button"
-        disabled={busy || closed || quantityInvalid || (!incremental && amount < 0)}
-        onClick={() => submit(incremental ? { quantity } : { amount, quantity })}
-      >
-        {busy ? t("offers.processing") : incremental ? t("offers.bid") : t("offers.submit")}
-      </button>
-      {product.buy_now_price > 0 && (
-        <button
-          className="button"
-          type="button"
-          disabled={busy || closed || quantityInvalid}
-          onClick={() => submit({ buy_now: true, quantity })}
-        >
-          {t("offers.buyNow", { price: formatMoney(product.buy_now_price, locale) })}
-        </button>
-      )}
-      {credentials && <button className="button" type="button" disabled={busy} onClick={refresh}>{t("offers.refresh")}</button>}
-      {message && <div className="notice" role="status">{message}</div>}
     </article>
   );
 }
@@ -147,11 +194,11 @@ export function OfferFlow({ products, ticket }: { products: Product[]; ticket: T
   if (!offers.length) return null;
 
   return (
-    <section aria-labelledby="offer-products-title" className="mt-6">
-      <h3 id="offer-products-title" className="mb-3 text-lg font-bold">
+    <section aria-labelledby="offer-products-title" className="mt-8 border-t border-border/40 pt-8">
+      <h3 id="offer-products-title" className="mb-4 text-2xl font-bold text-foreground">
         {t("offers.heading")}
       </h3>
-      <div className="product-grid">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {offers.map((product) => <OfferCard key={product.product_id} product={product} ticket={ticket} />)}
       </div>
     </section>
