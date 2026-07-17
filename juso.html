@@ -1,0 +1,567 @@
+<!DOCTYPE html><html lang="ko"><head>
+    <!-- 퍼블.250722 --------------------------------------------->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1248">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta content="text/html; charset=UTF-8; X-Content-Type-Options=nosniff" http-equiv="Content-Type">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="author" content="">
+    <meta name="description" content="">
+    <meta property="og:image" content="">
+    <meta property="og:title" content="">
+    <meta property="og:description" content="">
+    <meta property="og:url" content="">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <link rel="icon" href="/favicon.ico">
+
+    <title>주소기반산업지원서비스</title>
+    <!-- jQuery -->
+<!--    <link type="text/css" rel="stylesheet" href="/assets/jquery-ui/dist/themes/base/jquery-ui.css">-->
+<!--    <script src="/assets/jquery/dist/jquery.js"></script>-->
+<!--    <script src="/assets/jquery-ui/dist/jquery-ui.js"></script>-->
+    <!-- jQuery -->
+<!--    <link type="text/css" rel="stylesheet" href="/assets/jquery-ui/dist/themes/base/jquery-ui.css">-->
+<!--    <link type="text/css" rel="stylesheet" href="/assets/innorix/innorix.css">-->
+<!--    <script src="/assets/jquery/dist/jquery.js"></script>-->
+<!--    <script src="/assets/jquery-ui/dist/jquery-ui.js"></script>-->
+<!--    <script src="/assets/innorix/innorix.js"></script>-->
+
+    <script type="module" crossorigin="" src="/assets/index-ccfa0e4a.js"></script>
+    <link rel="stylesheet" href="/assets/index-ea2fbc23.css">
+  <style type="text/css" data-primevue-style-id="common">
+@layer primevue {
+.p-component, .p-component * {
+    box-sizing: border-box;
+}
+
+.p-hidden-space {
+    visibility: hidden;
+}
+
+.p-reset {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    text-decoration: none;
+    font-size: 100%;
+    list-style: none;
+}
+
+.p-disabled, .p-disabled * {
+    cursor: default !important;
+    pointer-events: none;
+    user-select: none;
+}
+
+.p-component-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.p-unselectable-text {
+    user-select: none;
+}
+
+.p-sr-only {
+    border: 0;
+    clip: rect(1px, 1px, 1px, 1px);
+    clip-path: inset(50%);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+    word-wrap: normal !important;
+}
+
+.p-link {
+	text-align: left;
+	background-color: transparent;
+	margin: 0;
+	padding: 0;
+	border: none;
+    cursor: pointer;
+    user-select: none;
+}
+
+.p-link:disabled {
+	cursor: default;
+}
+
+/* Non vue overlay animations */
+.p-connected-overlay {
+    opacity: 0;
+    transform: scaleY(0.8);
+    transition: transform .12s cubic-bezier(0, 0, 0.2, 1), opacity .12s cubic-bezier(0, 0, 0.2, 1);
+}
+
+.p-connected-overlay-visible {
+    opacity: 1;
+    transform: scaleY(1);
+}
+
+.p-connected-overlay-hidden {
+    opacity: 0;
+    transform: scaleY(1);
+    transition: opacity .1s linear;
+}
+
+/* Vue based overlay animations */
+.p-connected-overlay-enter-from {
+    opacity: 0;
+    transform: scaleY(0.8);
+}
+
+.p-connected-overlay-leave-to {
+    opacity: 0;
+}
+
+.p-connected-overlay-enter-active {
+    transition: transform .12s cubic-bezier(0, 0, 0.2, 1), opacity .12s cubic-bezier(0, 0, 0.2, 1);
+}
+
+.p-connected-overlay-leave-active {
+    transition: opacity .1s linear;
+}
+
+/* Toggleable Content */
+.p-toggleable-content-enter-from,
+.p-toggleable-content-leave-to {
+    max-height: 0;
+}
+
+.p-toggleable-content-enter-to,
+.p-toggleable-content-leave-from {
+    max-height: 1000px;
+}
+
+.p-toggleable-content-leave-active {
+    overflow: hidden;
+    transition: max-height 0.45s cubic-bezier(0, 1, 0, 1);
+}
+
+.p-toggleable-content-enter-active {
+    overflow: hidden;
+    transition: max-height 1s ease-in-out;
+}
+
+.p-button {
+    display: inline-flex;
+    cursor: pointer;
+    user-select: none;
+    align-items: center;
+    vertical-align: bottom;
+    text-align: center;
+    overflow: hidden;
+    position: relative;
+}
+
+.p-button-label {
+    flex: 1 1 auto;
+}
+
+.p-button-icon-right {
+    order: 1;
+}
+
+.p-button:disabled {
+    cursor: default;
+}
+
+.p-button-icon-only {
+    justify-content: center;
+}
+
+.p-button-icon-only .p-button-label {
+    visibility: hidden;
+    width: 0;
+    flex: 0 0 auto;
+}
+
+.p-button-vertical {
+    flex-direction: column;
+}
+
+.p-button-icon-bottom {
+    order: 2;
+}
+
+.p-buttonset .p-button {
+    margin: 0;
+}
+
+.p-buttonset .p-button:not(:last-child), .p-buttonset .p-button:not(:last-child):hover {
+    border-right: 0 none;
+}
+
+.p-buttonset .p-button:not(:first-of-type):not(:last-of-type) {
+    border-radius: 0;
+}
+
+.p-buttonset .p-button:first-of-type:not(:only-of-type) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.p-buttonset .p-button:last-of-type:not(:only-of-type) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.p-buttonset .p-button:focus {
+    position: relative;
+    z-index: 1;
+}
+
+
+.p-checkbox {
+    display: inline-flex;
+    cursor: pointer;
+    user-select: none;
+    vertical-align: bottom;
+    position: relative;
+}
+
+.p-checkbox.p-checkbox-disabled {
+    cursor: default;
+}
+
+.p-checkbox-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.p-fluid .p-inputtext {
+    width: 100%;
+}
+
+/* InputGroup */
+.p-inputgroup {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+}
+
+.p-inputgroup-addon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.p-inputgroup .p-float-label {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+}
+
+.p-inputgroup .p-inputtext,
+.p-fluid .p-inputgroup .p-inputtext,
+.p-inputgroup .p-inputwrapper,
+.p-fluid .p-inputgroup .p-input {
+    flex: 1 1 auto;
+    width: 1%;
+}
+
+/* Floating Label */
+.p-float-label {
+    display: block;
+    position: relative;
+}
+
+.p-float-label label {
+    position: absolute;
+    pointer-events: none;
+    top: 50%;
+    margin-top: -.5rem;
+    transition-property: all;
+    transition-timing-function: ease;
+    line-height: 1;
+}
+
+.p-float-label textarea ~ label {
+    top: 1rem;
+}
+
+.p-float-label input:focus ~ label,
+.p-float-label input.p-filled ~ label,
+.p-float-label input:-webkit-autofill ~ label,
+.p-float-label textarea:focus ~ label,
+.p-float-label textarea.p-filled ~ label,
+.p-float-label .p-inputwrapper-focus ~ label,
+.p-float-label .p-inputwrapper-filled ~ label {
+    top: -.75rem;
+    font-size: 12px;
+}
+
+
+.p-float-label .p-placeholder,
+.p-float-label input::placeholder,
+.p-float-label .p-inputtext::placeholder {
+    opacity: 0;
+    transition-property: all;
+    transition-timing-function: ease;
+}
+
+.p-float-label .p-focus .p-placeholder,
+.p-float-label input:focus::placeholder,
+.p-float-label .p-inputtext:focus::placeholder {
+    opacity: 1;
+    transition-property: all;
+    transition-timing-function: ease;
+}
+
+.p-input-icon-left,
+.p-input-icon-right {
+    position: relative;
+    display: inline-block;
+}
+
+.p-input-icon-left > i,
+.p-input-icon-left > svg,
+.p-input-icon-right > i,
+.p-input-icon-right > svg {
+    position: absolute;
+    top: 50%;
+    margin-top: -.5rem;
+}
+
+.p-fluid .p-input-icon-left,
+.p-fluid .p-input-icon-right {
+    display: block;
+    width: 100%;
+}
+
+
+.p-radiobutton {
+    position: relative;
+    display: inline-flex;
+    cursor: pointer;
+    user-select: none;
+    vertical-align: bottom;
+}
+
+.p-radiobutton.p-radiobutton-disabled {
+    cursor: default;
+}
+
+.p-radiobutton-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.p-radiobutton-icon {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transform: translateZ(0) scale(.1);
+    border-radius: 50%;
+    visibility: hidden;
+}
+
+.p-radiobutton-box.p-highlight .p-radiobutton-icon {
+    transform: translateZ(0) scale(1.0, 1.0);
+    visibility: visible;
+}
+
+}
+</style><style type="text/css" data-primevue-style-id="base">
+.p-hidden-accessible {
+    border: 0;
+    clip: rect(0 0 0 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+}
+
+.p-hidden-accessible input,
+.p-hidden-accessible select {
+    transform: scale(0);
+}
+
+.p-overflow-hidden {
+    overflow: hidden;
+    padding-right: var(--scrollbar-width);
+}
+</style><script src="/assets/innorix/innorix.js" id="innorixjs"></script><link id="innorixcss"><script src="/assets/jquery/dist/jquery.js" id="jqueryjs"></script><script src="/assets/jquery-ui/dist/jquery-ui.js" id="jqueryuijs"></script><link id="jqueryuicss"><link rel="stylesheet" href="/assets/theme-98a88cba.css"><link rel="stylesheet" href="/assets/primeicons-358f66d8.css"><link rel="stylesheet" href="/assets/bootstrap-icons.min-36fe1a28.css"><link rel="stylesheet" href="/assets/JsmInquiryDetails-e3b0c442.css"><link rel="stylesheet" href="/assets/all-7a89db5e.css"><link rel="stylesheet" href="/assets/ol-5fd94eca.css"><link rel="modulepreload" as="script" crossorigin="" href="/assets/geotiff-3c3debce.js"><link rel="modulepreload" as="script" crossorigin="" href="/assets/_commonjsHelpers-725317a4.js"><link rel="modulepreload" as="script" crossorigin="" href="/assets/format-d19b5c3f.js"><link rel="modulepreload" as="script" crossorigin="" href="/assets/Text-276b97b1.js"><link rel="modulepreload" as="script" crossorigin="" href="/assets/inflate-9d15c998.js"><link rel="modulepreload" as="script" crossorigin="" href="/assets/MVT-d65e75b2.js"><link rel="modulepreload" as="script" crossorigin="" href="/assets/JstAddressCuration-dfd94299.js"><link rel="modulepreload" as="script" crossorigin="" href="/assets/HeaderTitle-65bce036.js"><link rel="stylesheet" href="/assets/HeaderTitle-635c85b2.css"><link rel="modulepreload" as="script" crossorigin="" href="/assets/SearchResultHeader-7db8529f.js"><link rel="stylesheet" href="/assets/SearchResultHeader-9b5595d9.css"><link rel="modulepreload" as="script" crossorigin="" href="/assets/AddressCard-964bb904.js"><link rel="stylesheet" href="/assets/AddressCard-38276230.css"><link rel="stylesheet" href="/assets/JstAddressCuration-4936eddf.css"><link rel="stylesheet" href="/assets/SubHeaderTitle-effbcf98.css"><style type="text/css" data-primevue-style-id="ripple">
+@keyframes ripple {
+    100% {
+        opacity: 0;
+        transform: scale(2.5);
+    }
+}
+
+@layer primevue {
+    .p-ripple {
+        overflow: hidden;
+        position: relative;
+    }
+
+    .p-ink {
+        display: block;
+        position: absolute;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 100%;
+        transform: scale(0);
+        pointer-events: none;
+    }
+
+    .p-ink-active {
+        animation: ripple 0.4s linear;
+    }
+
+    .p-ripple-disabled .p-ink {
+        display: none !important;
+    }
+}
+</style><style type="text/css" data-primevue-style-id="dialog">
+@layer primevue {
+    .p-dialog-mask.p-component-overlay {
+        pointer-events: auto;
+    }
+
+    .p-dialog {
+        max-height: 90%;
+        transform: scale(1);
+    }
+
+    .p-dialog-content {
+        overflow-y: auto;
+    }
+
+    .p-dialog-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+    }
+
+    .p-dialog-footer {
+        flex-shrink: 0;
+    }
+
+    .p-dialog .p-dialog-header-icons {
+        display: flex;
+        align-items: center;
+    }
+
+    .p-dialog .p-dialog-header-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;
+    }
+
+    /* Fluid */
+    .p-fluid .p-dialog-footer .p-button {
+        width: auto;
+    }
+
+    /* Animation */
+    /* Center */
+    .p-dialog-enter-active {
+        transition: all 150ms cubic-bezier(0, 0, 0.2, 1);
+    }
+    .p-dialog-leave-active {
+        transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .p-dialog-enter-from,
+    .p-dialog-leave-to {
+        opacity: 0;
+        transform: scale(0.7);
+    }
+
+    /* Top, Bottom, Left, Right, Top* and Bottom* */
+    .p-dialog-top .p-dialog,
+    .p-dialog-bottom .p-dialog,
+    .p-dialog-left .p-dialog,
+    .p-dialog-right .p-dialog,
+    .p-dialog-topleft .p-dialog,
+    .p-dialog-topright .p-dialog,
+    .p-dialog-bottomleft .p-dialog,
+    .p-dialog-bottomright .p-dialog {
+        margin: 0.75rem;
+        transform: translate3d(0px, 0px, 0px);
+    }
+    .p-dialog-top .p-dialog-enter-active,
+    .p-dialog-top .p-dialog-leave-active,
+    .p-dialog-bottom .p-dialog-enter-active,
+    .p-dialog-bottom .p-dialog-leave-active,
+    .p-dialog-left .p-dialog-enter-active,
+    .p-dialog-left .p-dialog-leave-active,
+    .p-dialog-right .p-dialog-enter-active,
+    .p-dialog-right .p-dialog-leave-active,
+    .p-dialog-topleft .p-dialog-enter-active,
+    .p-dialog-topleft .p-dialog-leave-active,
+    .p-dialog-topright .p-dialog-enter-active,
+    .p-dialog-topright .p-dialog-leave-active,
+    .p-dialog-bottomleft .p-dialog-enter-active,
+    .p-dialog-bottomleft .p-dialog-leave-active,
+    .p-dialog-bottomright .p-dialog-enter-active,
+    .p-dialog-bottomright .p-dialog-leave-active {
+        transition: all 0.3s ease-out;
+    }
+    .p-dialog-top .p-dialog-enter-from,
+    .p-dialog-top .p-dialog-leave-to {
+        transform: translate3d(0px, -100%, 0px);
+    }
+    .p-dialog-bottom .p-dialog-enter-from,
+    .p-dialog-bottom .p-dialog-leave-to {
+        transform: translate3d(0px, 100%, 0px);
+    }
+    .p-dialog-left .p-dialog-enter-from,
+    .p-dialog-left .p-dialog-leave-to,
+    .p-dialog-topleft .p-dialog-enter-from,
+    .p-dialog-topleft .p-dialog-leave-to,
+    .p-dialog-bottomleft .p-dialog-enter-from,
+    .p-dialog-bottomleft .p-dialog-leave-to {
+        transform: translate3d(-100%, 0px, 0px);
+    }
+    .p-dialog-right .p-dialog-enter-from,
+    .p-dialog-right .p-dialog-leave-to,
+    .p-dialog-topright .p-dialog-enter-from,
+    .p-dialog-topright .p-dialog-leave-to,
+    .p-dialog-bottomright .p-dialog-enter-from,
+    .p-dialog-bottomright .p-dialog-leave-to {
+        transform: translate3d(100%, 0px, 0px);
+    }
+
+    /* Maximize */
+    .p-dialog-maximized {
+        -webkit-transition: none;
+        transition: none;
+        transform: none;
+        width: 100vw !important;
+        height: 100vh !important;
+        top: 0px !important;
+        left: 0px !important;
+        max-height: 100%;
+        height: 100%;
+    }
+    .p-dialog-maximized .p-dialog-content {
+        flex-grow: 1;
+    }
+
+    .p-confirm-dialog .p-dialog-content {
+        display: flex;
+        align-items: center;
+    }
+}
+</style><style type="text/css">.jqstooltip { position: absolute;left: 0px;top: 0px;visibility: hidden;background: rgb(0, 0, 0) transparent;background-color: rgba(0,0,0,0.6);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=#99000000, endColorstr=#99000000);-ms-filter: "progid:DXImageTransform.Microsoft.gradient(startColorstr=#99000000, endColorstr=#99000000)";color: white;font: 10px arial, san serif;text-align: left;white-space: nowrap;padding: 5px;border: 1px solid white;z-index: 10000;}.jqsfield { color: white;font: 10px arial, san serif;text-align: left;}</style><style type="text/css">.jqstooltip { position: absolute;left: 0px;top: 0px;visibility: hidden;background: rgb(0, 0, 0) transparent;background-color: rgba(0,0,0,0.6);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr=#99000000, endColorstr=#99000000);-ms-filter: "progid:DXImageTransform.Microsoft.gradient(startColorstr=#99000000, endColorstr=#99000000)";color: white;font: 10px arial, san serif;text-align: left;white-space: nowrap;padding: 5px;border: 1px solid white;z-index: 10000;}.jqsfield { color: white;font: 10px arial, san serif;text-align: left;}</style></head>
+  <body>
+    <div id="app" class="wrap" data-v-app=""><div class="layout"><ul data-v-ccf40088="" id="skipArea" class="skip__navi"><li data-v-ccf40088=""><a data-v-ccf40088="" href="#gnb" title="메인메뉴 바로가기">메인메뉴 바로가기</a></li><li data-v-ccf40088=""><a data-v-ccf40088="" class="outline_light" href="#content" title="본문 바로가기">본문 바로가기</a></li></ul><div data-v-ccf40088="" class="header__wrap"><div data-v-ccf40088="" class="header"><div data-v-ccf40088="" class="header__utillListWrap"><ul data-v-ccf40088="" class="header__utillList"><li data-v-ccf40088=""><!----></li><li data-v-ccf40088=""><button data-v-ccf40088="" class="button alarm none-alarm" title="알림">알림</button><!----></li><li data-v-ccf40088=""><button data-v-ccf40088="" class="button mypage">마이페이지</button></li></ul></div><div data-v-ccf40088="" class="header__inner"><div data-v-ccf40088="" class="header__utill"><h1 data-v-ccf40088="" class="header__logo"><a data-v-ccf40088="" href="/" title="메인이동하기"><img data-v-ccf40088="" src="/assets/img_logo-3a286eae.png" alt="주소기반산업지원서비스"></a></h1><ul data-v-ccf40088="" class="header__nav" id="gnb"><li data-v-ccf40088=""><button data-v-ccf40088="" class="header__gnbButton" title="메뉴 열기">주소정보 정책소개</button><div data-v-ccf40088="" class="header__gnb"><dl data-v-ccf40088="" class="header__gnbDescription"><dt data-v-ccf40088="">주소정보 정책소개</dt><dd data-v-ccf40088="">주소정보와 관련된 정책, 생성, 및<br>유통, 통계, 산업동향을 확인할 수<br>있습니다.</dd></dl><ul data-v-ccf40088="" class="header__gnbList"><li data-v-ccf40088="" class="header__gnbItem"><a data-v-ccf40088="" href="/jsu/jsuPolicyIntroduction" title="주소활용정책 소개" class="header__gnbLink"><div data-v-ccf40088="" class="header__gnbTitle">주소활용정책 소개</div><p data-v-ccf40088="" class="header__gnbText">도로명 주소정보와 관련된 정책을 안내합니다.</p></a></li><li data-v-ccf40088="" class="header__gnbItem"><a data-v-ccf40088="" href="/jsu/jsuPolicyProcess" title="주소정보 유통 프로세스 소개" class="header__gnbLink"><div data-v-ccf40088="" class="header__gnbTitle">주소정보 유통 프로세스 소개</div><p data-v-ccf40088="" class="header__gnbText">주소정보의 수집부터 유통까지<br>전 과정과 절차를 안내합니다.</p></a></li><li data-v-ccf40088="" class="header__gnbItem"><a data-v-ccf40088="" href="/jsu/jsuStatistics" title="주소정보 통계" class="header__gnbLink"><div data-v-ccf40088="" class="header__gnbTitle">주소정보 통계</div><p data-v-ccf40088="" class="header__gnbText">주소정보 제공 및 활용 관련 통계자료를 제공합니다.</p></a></li><li data-v-ccf40088="" class="header__gnbItem"><a data-v-ccf40088="" href="/jsu/jsuDlTrndBoard" title="산업동향" class="header__gnbLink"><div data-v-ccf40088="" class="header__gnbTitle">산업동향</div><p data-v-ccf40088="" class="header__gnbText">국내외 산업동향을 확인하여 주소정보를 활용해 보세요.</p></a></li></ul></div></li><li data-v-ccf40088=""><button data-v-ccf40088="" class="header__gnbButton" title="메뉴 열기">주소정보 체험하기</button><div data-v-ccf40088="" class="header__gnb"><dl data-v-ccf40088="" class="header__gnbDescription"><dt data-v-ccf40088="">주소정보 체험하기</dt><dd data-v-ccf40088="">다양한 주소정보를 편리하게 체험<br>할 수 있는 서비스를 제공합니다.</dd></dl><ul data-v-ccf40088="" class="header__gnbList"><li data-v-ccf40088="" class="header__gnbItem"><a data-v-ccf40088="" href="/jsp/jspRecommandStep01" title="사용자 추천서비스" class="header__gnbLink"><div data-v-ccf40088="" class="header__gnbTitle">사용자 추천서비스</div><p data-v-ccf40088="" class="header__gnbText">사용자의 이용 목적, 환경에 맞춰 주소정보를 추천합니다.</p></a></li><li data-v-ccf40088="" class="header__gnbItem"><a data-v-ccf40088="" href="/jsp/jspAttrInfoMain" title="도로명 주소 속성정보 체험하기" class="header__gnbLink"><div data-v-ccf40088="" class="header__gnbTitle">도로명 주소 속성정보 체험하기</div><p data-v-ccf40088="" class="header__gnbText">도로명 주소의 다양한 속성 정보를<br>직접 확인하고 체험할 수 있습니다.</p></a></li><li data-v-ccf40088="" class="header__gnbItem"><a data-v-ccf40088="" href="/jsp/jspShpInfoMain" title="도로명 주소 공간정보 체험하기" class="header__gnbLink"><div data-v-ccf40088="" class="header__gnbTitle">도로명 주소 공간정보 체험하기</div><p data-v-ccf40088="" class="header__gnbText">도로명 주소와 관련된 공간정보를<br>지도를 통해 확인할 수 있습니다.</p></a></li><li data-v-ccf40088="" class="header__gnbItem"><a data-v-ccf40088="" href="/jsp/jspAddrPolicyMain" title="신규 주소정책 체험하기" class="header__gnbLink"><div data-v-ccf40088="" class="header__gnbTitle">신규 주소정책 체험하기</div><p data-v-ccf40088="" class="header__gnbText">신규 주소정책에 따른 새로운 주소 정보를<br>체험할 수 있습니다.</p></a></li><li data-v-ccf40088="" class="header__gnbItem"><a data-v-ccf40088="" href="/jsp/JspApiExperience" title="API 체험하기" class="header__gnbLink"><div data-v-ccf40088="" class="header__gnbTitle">API 체험하기</div><p data-v-ccf40088="" class="header__gnbText">도로명주소에서 제공하는 API를<br>이용한 주소검색을 체험할 수 있습니다.</p></a></li></ul></div></li><li data-v-ccf40088=""><button data-v-ccf40088="" class="header__gnbButton" title="메뉴 열기">주소정보 자료제공</button><div data-v-ccf40088="" class="header__gnb"><dl data-v-ccf40088="" class="header__gnbDescription"><dt data-v-ccf40088="">주소정보 자료제공</dt><dd data-v-ccf40088="">주소정보 다운로드, 데이터연계,<br>API연계, 솔루션을 제공합니다.</dd></dl><ul data-v-ccf40088="" class="header__gnbList"><li data-v-ccf40088="" class="header__gnbItem"><a data-v-ccf40088="" href="/jst/jstAddressDetailsSearch" title="주소정보 다운로드" class="header__gnbLink"><div data-v-ccf40088="" class="header__gnbTitle">주소정보 다운로드</div><p data-v-ccf40088="" class="header__gnbText">다양한 주소정보(속성/공간)에 대한<br>다운로드 서비스를 제공합니다.</p></a></li><li data-v-ccf40088="" class="header__gnbItem"><a data-v-ccf40088="" href="/jst/jstAddressLinkage" title="주소정보 데이터 연계" class="header__gnbLink"><div data-v-ccf40088="" class="header__gnbTitle">주소정보 데이터 연계</div><p data-v-ccf40088="" class="header__gnbText">매일 변경되는 주소정보 변동자료를<br>연계를 통해 제공합니다.</p></a></li><li data-v-ccf40088="" class="header__gnbItem"><a data-v-ccf40088="" href="/jst/jstAddressApiList" title="주소정보 API 연계" class="header__gnbLink"><div data-v-ccf40088="" class="header__gnbTitle">주소정보 API 연계</div><p data-v-ccf40088="" class="header__gnbText">도로명주소를 검색할 수 있는 다양한<br>API연계 서비스를 제공합니다.</p></a></li><li data-v-ccf40088="" class="header__gnbItem"><a data-v-ccf40088="" href="/jst/jstAddrSrchSolution" title="주소정보 솔루션 제공" class="header__gnbLink"><div data-v-ccf40088="" class="header__gnbTitle">주소정보 솔루션 제공</div><p data-v-ccf40088="" class="header__gnbText">효율적인 주소정보 관리와 활용을 위한<br>다양한 솔루션을 제공합니다.</p></a></li></ul></div></li><li data-v-ccf40088=""><button data-v-ccf40088="" class="header__gnbButton" title="메뉴 열기">주소정보 소통창구</button><div data-v-ccf40088="" class="header__gnb"><dl data-v-ccf40088="" class="header__gnbDescription"><dt data-v-ccf40088="">주소정보 소통창구</dt><dd data-v-ccf40088="">주소정보 관련 공지사항, 문의<br>사항, 개발자 소통창구 등을<br>확인할 수 있습니다.</dd></dl><ul data-v-ccf40088="" class="header__gnbList"><li data-v-ccf40088="" class="header__gnbItem"><a data-v-ccf40088="" href="/jsi/jsiTechTipsList" title="주소정보 개발자 소통창구" class="header__gnbLink"><div data-v-ccf40088="" class="header__gnbTitle">주소정보 개발자 소통창구</div><p data-v-ccf40088="" class="header__gnbText">주소정보 관련 개발자와의 소통을 위한<br>지원 및 커뮤니케이션 창구를 제공합니다.</p></a></li><li data-v-ccf40088="" class="header__gnbItem"><a data-v-ccf40088="" href="/jsi/jsiInquiryList" title="주소정보 문의하기" class="header__gnbLink"><div data-v-ccf40088="" class="header__gnbTitle">주소정보 문의하기</div><p data-v-ccf40088="" class="header__gnbText">주소정보 관련 궁금한 점을 질문하고<br>답변을 받을 수 있습니다.</p></a></li><li data-v-ccf40088="" class="header__gnbItem"><a data-v-ccf40088="" href="/jsi/jsiNoticeBoard" title="주소정보 공지사항" class="header__gnbLink"><div data-v-ccf40088="" class="header__gnbTitle">주소정보 공지사항</div><p data-v-ccf40088="" class="header__gnbText">주소정보와 관련된 최신 소식과<br>중요 공지사항을 안내합니다.</p></a></li><li data-v-ccf40088="" class="header__gnbItem"><a data-v-ccf40088="" href="/jsi/jsiAreaCode" title="행정체제 개편 데이터 제공" class="header__gnbLink"><div data-v-ccf40088="" class="header__gnbTitle">행정체제 개편 데이터 제공</div><p data-v-ccf40088="" class="header__gnbText">대규모 행정구역 코드 변경사항과 관련된<br>정책안내 및 데이터를 제공합니다.</p></a></li></ul></div></li></ul></div></div><!----></div></div><div class="content" id="content"><ul data-v-3bfdc713="" class="breadcrumbBox"><li data-v-3bfdc713=""><a data-v-3bfdc713="" href="/" title=" 홈 이동"><img src="/src/assets/images/common/icon/icon_home.svg" alt="메인"> 홈</a><span data-v-3bfdc713="" class="separator"><img data-v-3bfdc713="" src="/assets/icon_breadcrumbs-dbce8d2f.svg" alt="&gt;"></span></li><li data-v-3bfdc713=""><a data-v-3bfdc713="" href="/jst/jstAddressCuration" title="주소정보 자료제공 이동">주소정보 자료제공</a><span data-v-3bfdc713="" class="separator"><img data-v-3bfdc713="" src="/assets/icon_breadcrumbs-dbce8d2f.svg" alt="&gt;"></span></li><li data-v-3bfdc713="">주소정보 다운로드<!----></li></ul><h3 data-v-7317a687="" data-v-fdd30275="" class="headerTitle">주소정보 다운로드</h3><div data-v-fdd30275="" class="addressDownload__header"><div data-v-fdd30275="" class="addressDownload__more"><span data-v-fdd30275="" class="addressDownload__moreTip">※ 주소정보 이용 및 활용 시, <b data-v-fdd30275="">도로명주소법 시행령 6조(도로명주소의 구성 및 표기방법)</b>을 준수하여 주시기 바랍니다.</span></div><div data-v-fdd30275="" class="addressDownload__list__off"><div data-v-fdd30275="" class="addressDownload__name">리스트</div></div><div data-v-fdd30275="" class="addressDownload__card__on"><div data-v-fdd30275="" class="addressDownload__name">카드형</div></div></div><ul data-v-fdd30275="" class="addressDownload__category"><li data-v-fdd30275=""><button data-v-fdd30275="" class="p-button p-component addressDownload__button type01 active" type="button" data-pc-name="button" data-pc-section="root" title="전체보기"><img data-v-fdd30275="" aria-hidden="true" src="/assets/btn_que01-e93cf18e.svg" alt="전체보기 아이콘"><br data-v-fdd30275=""> 전체 </button></li><li data-v-fdd30275=""><button data-v-fdd30275="" class="p-button p-component addressDownload__button type02" type="button" data-pc-name="button" data-pc-section="root" title="주소보기"><img data-v-fdd30275="" aria-hidden="true" src="/assets/btn_que02-b14fe7f0.svg" alt="주소보기 아이콘"><br data-v-fdd30275=""> 주소 </button></li><li data-v-fdd30275=""><button data-v-fdd30275="" class="p-button p-component addressDownload__button type03" type="button" data-pc-name="button" data-pc-section="root" title="도로보기"><img data-v-fdd30275="" aria-hidden="true" src="/assets/btn_que03-d7429a8b.svg" alt="도로보기 아이콘"><br data-v-fdd30275=""> 도로 </button></li><li data-v-fdd30275=""><button data-v-fdd30275="" class="p-button p-component addressDownload__button type04" type="button" data-pc-name="button" data-pc-section="root" title="건물보기"><img data-v-fdd30275="" aria-hidden="true" src="/assets/btn_que04-df889a21.svg" alt="건물보기 아이콘"><br data-v-fdd30275=""> 건물 </button></li><li data-v-fdd30275=""><button data-v-fdd30275="" class="p-button p-component addressDownload__button type05" type="button" data-pc-name="button" data-pc-section="root" title="출입구보기"><img data-v-fdd30275="" aria-hidden="true" src="/assets/btn_que05-528f158c.svg" alt="출입구보기 아이콘"><br data-v-fdd30275=""> 출입구 </button></li><li data-v-fdd30275=""><button data-v-fdd30275="" class="p-button p-component addressDownload__button type06" type="button" data-pc-name="button" data-pc-section="root" title="사물보기"><img data-v-fdd30275="" aria-hidden="true" src="/assets/btn_que06-aaed5077.svg" alt="사물보기 아이콘"><br data-v-fdd30275=""> 사물 </button></li><li data-v-fdd30275=""><button data-v-fdd30275="" class="p-button p-component addressDownload__button type07" type="button" data-pc-name="button" data-pc-section="root" title="시설물보기"><img data-v-fdd30275="" aria-hidden="true" src="/assets/btn_que07-76f5734f.svg" alt="시설물보기 아이콘"><br data-v-fdd30275=""> 시설물 </button></li><li data-v-fdd30275=""><button data-v-fdd30275="" class="p-button p-component addressDownload__button type08" type="button" data-pc-name="button" data-pc-section="root" title="기타정보보기"><img data-v-fdd30275="" aria-hidden="true" src="/assets/btn_que08-d0d35256.svg" alt="기타정보 아이콘"><br data-v-fdd30275=""> 기타정보 </button></li></ul><div data-v-68000442="" data-v-fdd30275="" class="searchResultHeader"><div data-v-68000442="" class="searchResultHeader__result">공개하는 주소 <span class="searchResultHeader__count">13</span>건, 제공하는 주소 <span class="searchResultHeader__count">18</span>건</div><!----></div><ul data-v-fdd30275="" class="addressDownload__list"><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type01"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge primary">공개하는 주소</span><span data-v-a5125d0b="" class="badge tertiary">TXT</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">도로명주소 한글</span></div><p data-v-a5125d0b="" class="addressCard__text">도로명주소한글DB는 도로명주소 기준의 DB입니다.<br> 약 600만여 건의 도로명주소로 구성으로, 여러 개의 건물이 하나의 도로명주소를 갖는 집합건물(예: 아파트)의 경우 한 건의 주소정보를 제공합니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type02"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge primary">공개하는 주소</span><span data-v-a5125d0b="" class="badge tertiary">TXT</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">도로명주소 영문</span></div><p data-v-a5125d0b="" class="addressCard__text">도로명주소영문 DB는 여러 개의 건물이 하나의 도로명주소를 갖는 집합 건물(예: 아파트)의 경우 한 건의 주소정보를 영문으로 제공하도록 구성된 도로명주소기준의 DB입니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type03"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge primary">공개하는 주소</span><span data-v-a5125d0b="" class="badge tertiary">TXT</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">상세주소 표시</span></div><p data-v-a5125d0b="" class="addressCard__text">상세주소란 도로명주소의 건물번호 뒤에 표시되는 동·층·호 정보로, 2가구 이상 거주하는 원룸·다가구·단독주택에 부여합니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type04"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge primary">공개하는 주소</span><span data-v-a5125d0b="" class="badge tertiary">TXT</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">상세주소 동 표시</span></div><p data-v-a5125d0b="" class="addressCard__text">건물 동단위로 부여된 도로명주소를 제공합니다.<br>(층·호 제외/건물단위제공)</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type05"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge primary">공개하는 주소</span><span data-v-a5125d0b="" class="badge tertiary">TXT</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">사물주소</span></div><p data-v-a5125d0b="" class="addressCard__text">도로명과 기초번호를 이용하여 구성한 사물주소 정보를 제공합니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type06"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge primary">공개하는 주소</span><span data-v-a5125d0b="" class="badge tertiary">TXT</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">도로명</span></div><p data-v-a5125d0b="" class="addressCard__text">도로명주소의 부여되는 도로명/시군구명/법정동(읍면동)명 부여일자 등을 제공합니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type08"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge primary">공개하는 주소</span><span data-v-a5125d0b="" class="badge tertiary">TXT</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">건물DB</span></div><p data-v-a5125d0b="" class="addressCard__text">도로명주소를 구성하는 기본 단위인 건물정보와 해당 건물이 위치한 토지(지번)정보로 구성된 DB입니다. 하나의 도로명주소가 부여된 단지형 아파트의 경우에도 상세 동별 정보가 모두 제공되므로, 건물 단위의 주소 활용에 용이합니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type09"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge primary">공개하는 주소</span><span data-v-a5125d0b="" class="badge tertiary">TXT</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">주소DB</span></div><p data-v-a5125d0b="" class="addressCard__text">주소DB는 여러 개의 건물이 하나의 도로명주소를 갖는 집합 건물(예: 아파트)의 경우 한 건의 주소정보를 제공하도록 구성된 주소 단위의 DB입니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type03"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge primary">공개하는 주소</span><span data-v-a5125d0b="" class="badge tertiary">TXT</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">사서함주소DB</span></div><p data-v-a5125d0b="" class="addressCard__text">사서함주소DB는 인터넷 우체국(www.epost.kr)에 정기적으로 게시되는 사서함DB를 가공하여 제공합니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type02"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge primary">공개하는 주소</span><span data-v-a5125d0b="" class="badge tertiary">TXT</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">영문도로명주소DB</span></div><p data-v-a5125d0b="" class="addressCard__text">주소DB와 관련지번을 결합한 단일 파일로 구성하여 1개월 주기로 제공합니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type09"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge primary">공개하는 주소</span><span data-v-a5125d0b="" class="badge tertiary">TXT</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">상세주소DB</span></div><p data-v-a5125d0b="" class="addressCard__text">주소정보와 건물단위로 매칭가능한 상세주소정보를 제공합니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type05"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge primary">공개하는 주소</span><span data-v-a5125d0b="" class="badge tertiary">TXT</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">사물주소DB</span></div><p data-v-a5125d0b="" class="addressCard__text">안전 사고 발생 시 신속 대응 지원 및 내비게이션 등에 안내체계 마련을 위해<br>	도로명과 기초번호를 이용하여 구성한 사물주소정보를 제공합니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type22"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge primary">공개하는 주소</span><span data-v-a5125d0b="" class="badge tertiary">TXT</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">명예도로</span></div><p data-v-a5125d0b="" class="addressCard__text">공로를 기리거나 역사적·사회적 의미를 반영해 특정 인물·단체의 이름을 붙인 기념 도로</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type07"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge secondary">제공하는 주소</span><span data-v-a5125d0b="" class="badge tertiary">TXT</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">도로명주소 출입구 정보</span></div><p data-v-a5125d0b="" class="addressCard__text">도로명주소 기준의 출입구 좌표를 제공합니다.<br>※집합건물(예: 아파트)의 경우 주소기준의 주(보조)출입구 제공 / 건물단위제공 안함</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type08"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge secondary">제공하는 주소</span><span data-v-a5125d0b="" class="badge">SHP</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">도로명주소 건물 도형</span></div><p data-v-a5125d0b="" class="addressCard__text">도로명주소의 도형정보(집합건물 일 경우 건물군 제공)/ 출입구 정보/ 연결선 정보를 제공합니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type09"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge secondary">제공하는 주소</span><span data-v-a5125d0b="" class="badge">SHP</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">건물군 내 상세주소 동 도형</span></div><p data-v-a5125d0b="" class="addressCard__text">집합건물(예: 아파트) 내 동이 부여된 도로명주소의 도형정보를 제공합니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type10"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge secondary">제공하는 주소</span><span data-v-a5125d0b="" class="badge tertiary">TXT</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">사물주소 시설 기준점</span></div><p data-v-a5125d0b="" class="addressCard__text">도로명과 기초번호를 이용하여 구성한 사물주소정보의 기준점을 제공합니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type11"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge secondary">제공하는 주소</span><span data-v-a5125d0b="" class="badge">SHP</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">사물주소 시설 도형</span></div><p data-v-a5125d0b="" class="addressCard__text">도로명과 기초번호를 이용하여 구성한 사물주소정보의 도형정보를 제공합니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type12"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge secondary">제공하는 주소</span><span data-v-a5125d0b="" class="badge tertiary">TXT</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">기초번호</span></div><p data-v-a5125d0b="" class="addressCard__text">위치정보 제공을 위한 기초번호 중심점 좌표정보를 제공합니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type13"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge secondary">제공하는 주소</span><span data-v-a5125d0b="" class="badge tertiary">TXT</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">국가지점번호 중심점</span></div><p data-v-a5125d0b="" class="addressCard__text">도로명주소 사용에 따라 도로명이 부여되지 않는 국토 및 이와 인접한 해양 등의 위치표시체계 보완을 위해 전국을 일정한 격자 단위로 구획하여 부여한 지점의 번호와 해당 격자의 중심점 좌표를 제공합니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type14"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge secondary">제공하는 주소</span><span data-v-a5125d0b="" class="badge">SHP</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">국가지점번호 도형</span></div><p data-v-a5125d0b="" class="addressCard__text">도로명주소 사용에 따라 도로명이 부여되지 않는 국토 및 이와 인접한 해양 등의 위치표시체계 보완을 위해 전국을 일정한 격자 단위로 구획하여 부여한 지점의 번호와 가로와 세로의 길이가 각각 100m, 1Km, 10Km, 100Km로 나뉘어진 지점번호 격자 정보를 제공합니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type15"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge secondary">제공하는 주소</span><span data-v-a5125d0b="" class="badge">SHP</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">도로명이 부여된 도로 도형</span></div><p data-v-a5125d0b="" class="addressCard__text">도로명이 부여된 도로구간 등의 도형(법정구역/도로명/기초번호 사용범위/도로구간/기초구간/도로의실폭 등)을 제공합니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type16"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge secondary">제공하는 주소</span><span data-v-a5125d0b="" class="badge">SHP</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">구역의 도형</span></div><p data-v-a5125d0b="" class="addressCard__text">법정구역, 행정구역, 기초구역, 지점번호표기의무지역의 경계를 제공합니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type17"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge secondary">제공하는 주소</span><span data-v-a5125d0b="" class="badge">SHP</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">기타자료</span></div><p data-v-a5125d0b="" class="addressCard__text">도로명주소 배경지공원, 철도, 교량, 하천 등 도로명주소 전자지도의 배경으로 활용되는 도형(점,선,면)을 제공합니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type18"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge secondary">제공하는 주소</span><span data-v-a5125d0b="" class="badge">SHP</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">도로명주소 전자지도</span></div><p data-v-a5125d0b="" class="addressCard__text">건물, 건물군, 도로구간, 실폭도로, 기초구간, 출입구, 기초구역, 행정구역경계(시도, 시군구, 읍면동, 법정리)등 11종을 제공합니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type19"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge secondary">제공하는 주소</span><span data-v-a5125d0b="" class="badge tertiary">TXT</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">위치정보요약DB</span></div><p data-v-a5125d0b="" class="addressCard__text">위치기반 서비스 제공자를 위해 도로명주소와 좌표 정보를 결합한 요약DB를 제공합니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type20"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge secondary">제공하는 주소</span><span data-v-a5125d0b="" class="badge tertiary">TXT</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">내비게이션용DB</span></div><p data-v-a5125d0b="" class="addressCard__text">내비게이션 등 위치안내 서비스에 특화하여 건물단위 도로명주소 정보 및 좌표정보(건물중심점, 주출입구, 보조출입구)를 제공합니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type12"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge secondary">제공하는 주소</span><span data-v-a5125d0b="" class="badge tertiary">TXT</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">기초번호위치정보DB</span></div><p data-v-a5125d0b="" class="addressCard__text">안전 사고 발생에 대한 신속 대응 및 내비게이션 등에 위치정보 제공을 위한 기초번호 중심점 좌표정보를 제공합니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type08"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge secondary">제공하는 주소</span><span data-v-a5125d0b="" class="badge">SHP</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">민원행정기관 전자지도</span></div><p data-v-a5125d0b="" class="addressCard__text">중앙행정기관 및 지방자치단체청사, 법원, 경찰서, 우체국, 학교 등 행정기관의 위치정보가 포함된 전자지도를 제공합니다.<br>제공되는 레이어는 Point입니다. </p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type23"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge secondary">제공하는 주소</span><span data-v-a5125d0b="" class="badge">SHP</span><!----></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">명예도로 도형</span></div><p data-v-a5125d0b="" class="addressCard__text">공로를 기리거나 역사적·사회적 의미를 반영해 특정 인물·단체의 이름을 붙인 기념 도로 도형</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li><li data-v-fdd30275=""><div data-v-a5125d0b="" data-v-fdd30275="" class="addressCard type24"><div data-v-a5125d0b="" class="addressCard__selectFunction"><div data-v-a5125d0b="" class="addressCard__type"><!----><span data-v-a5125d0b="" class="badge secondary">제공하는 주소</span><span data-v-a5125d0b="" class="badge">SHP</span><span data-v-a5125d0b="" class="badge quarternary">시범</span></div><div data-v-a5125d0b="" class="addressCard__likeBox"><button data-v-a5125d0b="" class="p-button p-component addressCard__like" type="button" data-pc-name="button" data-pc-section="root" title="좋아요 선택"><span data-v-a5125d0b="" class="blind">좋아요</span></button></div></div><div data-v-a5125d0b="" class="addressCard__titleBox"><span data-v-a5125d0b="" class="addressCard__title">내부도로 전자지도</span></div><p data-v-a5125d0b="" class="addressCard__text">철도 및 지하철역사, 지하상가 등 건축물 또는 구조물의<br>내부에 설치된 도로 및 통로의 정보를 제공합니다.</p><!----><div data-v-a5125d0b="" class="addressCard__function"><!----><button data-v-a5125d0b="" class="p-button p-component addressCard__detail" type="button" data-pc-name="button" data-pc-section="root">자세히보기</button></div></div></li></ul></div><div data-v-7990dd09="" class="footer"><div data-v-7990dd09="" class="footer__innerBox"><div data-v-7990dd09="" class="footer__logo"><img data-v-7990dd09="" src="/assets/img_footerlogo-5ca6f871.png" alt="행정안전부 로고"><img data-v-7990dd09="" src="/assets/img_footerklid-8cb59018.png" alt="개발원 로고"></div><p class="footer__address" data-v-7990dd09="">(30112) 세종특별자치시 도움6로 42 (어진동)</p><div class="footer__other" data-v-7990dd09=""><div class="footer__numberBox" data-v-7990dd09=""><strong class="footer__numberTitle" data-v-7990dd09="">대표전화</strong><strong class="footer__number" data-v-7990dd09="">1588-0061(7번)</strong> | <span data-v-7990dd09="">(평일 09~18시, 점심 12~13시)</span></div><p class="footer__copyText" data-v-7990dd09="">© Ministry of the Interior and Safety, All rights reserved.</p></div></div></div></div><!----></div>
+    
+  
+
+<div class="irx_messageBox_wrapper" style="display: none;">   <div class="irx_messageBox">   </div></div><div class="irx_transferWin_wrapper" style="display: none;">   <div class="irx_transferWin">      <div class="irx_header">          <span class="irx_title">              <span class="irx_percent">0%</span> - <span class="irx_custom_title">WP</span>          </span>          <button class="irx_close" type="button">X</button>      </div>      <div class="irx_container">          <div class="irx_filetree">          </div>          <div class="irx_indicator">              <ol class="irx_speed_light">                  <li class="irx_speed1"></li>                  <li class="irx_speed2"></li>                  <li class="irx_speed3"></li>              </ol>          </div>          <div class="irx_validate_progress_server"></div>          <div class="irx_progress">              <span class="irx_progressStr_left">0% (0Byte / 0Byte)</span>              <span class="irx_progressStr_right irx_right">0 sec (0B/s)</span>              <div class="irx_progressBar">                  <span class="irx_progressStr_left">0% (0Byte / 0Byte)</span>                  <span class="irx_progressStr_right">0 sec (0B/s)</span>                  <div class="irx_validate_progress"></div>              </div>          </div>          <div class="irx_center">              <div data-textt="status" class="irx_status">              </div>              <div class="irx_btnGroup">                  <button type="button" class="irx_trn_status">Connection Status</button>                  <button type="button" class="irx_toggle_graph">Graph</button>                  <button type="button" class="irx_qr_code">QR Code</button>                  <button type="button" class="irx_controller">Start</button>              </div>          </div>          <div class="irx_folderPath_wrapper">          <div class="irx_folderPath">              <button type="button" class="irx_folderDialog">Open</button>              <span class="irx_folderPath_str">C:/ASDF</span>          </div>          </div>          <div class="irx_bottom_policy">              <span>Resume Policy</span>              <label for="irx_resume_policy"><input type="checkbox" value="resume" checked="" id="irx_resume_policy" class="resume_policy_checkbox"> Resume </label>              <label for="irx_overwrite_policy"><input type="checkbox" value="overwrite" id="irx_overwrite_policy" class="resume_policy_checkbox"> Overwrite              <label for="irx_confirm_policy"><input type="checkbox" value="confirm" id="irx_confirm_policy" class="resume_policy_checkbox"> Confirm          </label></label></div>          <div class="irx_qr_wrapper">              <div class="gplayLogo"></div>              <div class="desc"></div>              <div class="qr_code"> </div>          </div>              <div class="irx_graph_wrapper">                <span class="irx_avg_trn_rate_txt">0Byte/s</span>              </div>          <div class="irx_bottom">              <span>INNORIX</span>          </div>      </div>   </div></div></body></html>
