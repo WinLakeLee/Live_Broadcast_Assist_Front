@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertTriangle, LoaderCircle } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+import DaumPostcodeEmbed from "react-daum-postcode";
 
 import { StepIndicator } from "@/components/ui/step-indicator";
 import { usePurchaseMachine } from "@/hooks/use-purchase-machine";
@@ -42,6 +43,7 @@ export function PurchaseClient() {
   const [quantities, setQuantities] = useState<Record<string, number>>(() =>
     quantitiesFromDraft(savedDraft),
   );
+  const [isPostcodeOpen, setIsPostcodeOpen] = useState(false);
 
   const form = useForm<BuyerForm>({
     resolver: zodResolver(buyerSchema),
@@ -127,6 +129,23 @@ export function PurchaseClient() {
     }
   };
 
+  const handlePostcodeComplete = (data: any) => {
+    let fullAddress = data.address;
+    let extraAddress = "";
+
+    if (data.addressType === "R") {
+      if (data.bname !== "") extraAddress += data.bname;
+      if (data.buildingName !== "") {
+        extraAddress += extraAddress !== "" ? `, ${data.buildingName}` : data.buildingName;
+      }
+      fullAddress += extraAddress !== "" ? ` (${extraAddress})` : "";
+    }
+
+    form.setValue("address", `[${data.zonecode}] ${fullAddress} `, { shouldValidate: true });
+    setIsPostcodeOpen(false);
+    document.getElementById("address")?.focus();
+  };
+
   const quote = form.handleSubmit(() => {
     const draft = makeDraft();
     if (!draft.items.length) {
@@ -151,9 +170,9 @@ export function PurchaseClient() {
       <main className="w-full max-w-3xl mx-auto px-4 py-12 pb-24">
         <StepIndicator current={1} />
         <Card className="flex flex-col items-center justify-center p-12 text-center shadow-sm">
-          <LoaderCircle className="animate-spin text-[#e94d2f] mb-6" size={48} aria-hidden="true" />
+          <LoaderCircle className="animate-spin text-primary mb-6" size={48} aria-hidden="true" />
           <h1 className="text-2xl font-bold mb-2">구매내역을 준비하고 있습니다</h1>
-          <p className="text-slate-500">서버 견적을 안전하게 확인하고 있습니다.</p>
+          <p className="text-muted-foreground">서버 견적을 안전하게 확인하고 있습니다.</p>
         </Card>
       </main>
     );
@@ -162,9 +181,9 @@ export function PurchaseClient() {
   if (state.status === "fatalError") {
     return (
       <main className="w-full max-w-3xl mx-auto px-4 py-12 pb-24">
-        <Card className="border-red-200 bg-red-50 p-8 shadow-sm">
-          <h1 className="text-2xl font-bold text-red-700 mb-2">구매를 계속할 수 없습니다</h1>
-          <p className="text-red-600 mb-6">{state.message}</p>
+        <Card className="border-destructive/20 bg-destructive/5 p-8 shadow-sm">
+          <h1 className="text-2xl font-bold text-destructive mb-2">구매를 계속할 수 없습니다</h1>
+          <p className="text-destructive mb-6">{state.message}</p>
           <Button asChild>
             <Link href="/">처음으로</Link>
           </Button>
@@ -200,18 +219,18 @@ export function PurchaseClient() {
     <main className="w-full max-w-4xl mx-auto px-4 py-12 pb-32">
       <StepIndicator current={2} />
       <div className="mb-8">
-        <span className="inline-flex gap-2 items-center text-[#e94d2f] text-xs font-black tracking-widest uppercase mb-2">ORDER</span>
-        <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-4">상품과 배송정보를 입력하세요</h1>
-        <p className="text-slate-500">
+        <span className="inline-flex gap-2 items-center text-primary text-xs font-black tracking-widest uppercase mb-2">ORDER</span>
+        <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-4 text-foreground">상품과 배송정보를 입력하세요</h1>
+        <p className="text-muted-foreground">
           표시 재고는 안내이며 주문 확정 전 서버에서 다시 확인합니다.
         </p>
       </div>
 
-      <Card className="mb-8 shadow-sm">
-        <CardHeader>
-          <CardTitle>1. 상품 선택</CardTitle>
+      <Card className="mb-8 shadow-sm border border-border/50 bg-card rounded-[24px] overflow-hidden">
+        <CardHeader className="border-b border-border/40 bg-card-muted/20 px-6 py-4">
+          <CardTitle className="text-foreground">1. 상품 선택</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           <CheckoutFlow
             products={state.products}
             quantities={quantities}
@@ -222,32 +241,34 @@ export function PurchaseClient() {
       </Card>
 
       <form onSubmit={quote}>
-        <Card className="mb-8 shadow-sm">
-          <CardHeader>
-            <CardTitle>2. 배송정보</CardTitle>
+        <Card className="mb-8 shadow-sm border border-border/50 bg-card rounded-[24px] overflow-hidden">
+          <CardHeader className="border-b border-border/40 bg-card-muted/20 px-6 py-4">
+            <CardTitle className="text-foreground">2. 배송정보</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-8 p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3">
-                <Label htmlFor="buyer_name">주문자명</Label>
+                <Label htmlFor="buyer_name" className="text-sm font-semibold text-foreground">주문자명</Label>
                 <Input
                   id="buyer_name"
                   autoComplete="name"
+                  className="rounded-xl border-border bg-card-muted/30 focus-visible:ring-primary"
                   aria-describedby={form.formState.errors.buyer_name ? "buyer_name-error" : undefined}
                   {...form.register("buyer_name")}
                 />
                 {form.formState.errors.buyer_name && (
-                  <p id="buyer_name-error" className="text-sm text-red-500">
+                  <p id="buyer_name-error" className="text-sm font-medium text-destructive">
                     {form.formState.errors.buyer_name.message}
                   </p>
                 )}
               </div>
               <div className="space-y-3">
-                <Label htmlFor="phone">전화번호</Label>
+                <Label htmlFor="phone" className="text-sm font-semibold text-foreground">전화번호</Label>
                 <Input
                   id="phone"
                   type="tel"
                   autoComplete="tel"
+                  className="rounded-xl border-border bg-card-muted/30 focus-visible:ring-primary"
                   aria-describedby={form.formState.errors.phone ? "phone-error" : undefined}
                   {...form.register("phone", {
                     onChange: (e) => {
@@ -259,7 +280,7 @@ export function PurchaseClient() {
                   })}
                 />
                 {form.formState.errors.phone && (
-                  <p id="phone-error" className="text-sm text-red-500">
+                  <p id="phone-error" className="text-sm font-medium text-destructive">
                     {form.formState.errors.phone.message}
                   </p>
                 )}
@@ -267,27 +288,31 @@ export function PurchaseClient() {
             </div>
 
             <div className="space-y-3">
-              <Label htmlFor="address">배송주소</Label>
+              <div className="flex justify-between items-center">
+                <Label htmlFor="address" className="text-sm font-semibold text-foreground">배송주소</Label>
+                <Button type="button" variant="outline" size="sm" onClick={() => setIsPostcodeOpen(true)} className="text-xs h-8">우편번호 찾기</Button>
+              </div>
               <textarea
                 id="address"
                 autoComplete="street-address"
-                className="flex w-full rounded-xl border border-[#cfd1ca] bg-white px-3 py-2 text-sm placeholder:text-[#686d65] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1777d2] min-h-[100px] resize-y"
+                className="flex w-full rounded-xl border border-border bg-card-muted/30 px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary min-h-[100px] resize-y"
                 aria-describedby={form.formState.errors.address ? "address-error" : undefined}
                 {...form.register("address")}
               />
               {form.formState.errors.address && (
-                <p id="address-error" className="text-sm text-red-500">
+                <p id="address-error" className="text-sm font-medium text-destructive">
                   {form.formState.errors.address.message}
                 </p>
               )}
             </div>
 
-            <div className="space-y-4 pt-4 border-t border-slate-100">
-              <Label htmlFor="coupon_code">쿠폰 코드 (선택)</Label>
+            <div className="space-y-4 pt-6 border-t border-border/40">
+              <Label htmlFor="coupon_code" className="text-sm font-semibold text-foreground">쿠폰 코드 (선택)</Label>
               <Input
                 id="coupon_code"
                 autoComplete="off"
                 placeholder="WELCOME10"
+                className="rounded-xl border-border bg-card-muted/30 focus-visible:ring-primary font-mono uppercase text-foreground"
                 {...form.register("coupon_code", {
                   onChange: (event) => {
                     event.target.value = event.target.value.toUpperCase();
@@ -295,64 +320,84 @@ export function PurchaseClient() {
                 })}
               />
               {form.formState.errors.coupon_code && (
-                <p className="text-sm text-red-500">{form.formState.errors.coupon_code.message}</p>
+                <p className="text-sm font-medium text-destructive">{form.formState.errors.coupon_code.message}</p>
               )}
             </div>
 
-            <div className="space-y-4 pt-4 border-t border-slate-100">
-              <Label className="text-base font-bold">재고 부족 처리</Label>
+            <div className="space-y-4 pt-6 border-t border-border/40">
+              <Label className="text-base font-bold text-foreground">재고 부족 처리</Label>
               <div className="flex flex-col md:flex-row gap-4">
-                <label className="flex flex-1 gap-3 items-center border border-slate-200 rounded-xl p-4 cursor-pointer hover:bg-slate-50 transition-colors">
-                  <input type="radio" value="partial" className="w-5 h-5 accent-[#e94d2f]" {...form.register("stock_policy")} />
-                  <span className="font-medium">가능한 상품만 구매</span>
+                <label className="group flex flex-1 gap-4 items-start border border-border bg-card-muted/20 rounded-2xl p-5 cursor-pointer hover:border-primary/50 transition-all focus-within:ring-2 focus-within:ring-primary">
+                  <input type="radio" value="partial" className="mt-1 w-5 h-5 accent-primary cursor-pointer" {...form.register("stock_policy")} />
+                  <div className="flex flex-col">
+                    <span className="font-bold text-foreground group-hover:text-primary transition-colors">부분 배송 허용</span>
+                    <span className="text-sm text-muted-foreground mt-1">재고가 있는 상품만 먼저 주문합니다.</span>
+                  </div>
                 </label>
-                <label className="flex flex-1 gap-3 items-center border border-slate-200 rounded-xl p-4 cursor-pointer hover:bg-slate-50 transition-colors">
-                  <input type="radio" value="all_or_nothing" className="w-5 h-5 accent-[#e94d2f]" {...form.register("stock_policy")} />
-                  <span className="font-medium">하나라도 부족하면 전체 취소</span>
+                <label className="group flex flex-1 gap-4 items-start border border-border bg-card-muted/20 rounded-2xl p-5 cursor-pointer hover:border-primary/50 transition-all focus-within:ring-2 focus-within:ring-primary">
+                  <input type="radio" value="all_or_nothing" className="mt-1 w-5 h-5 accent-primary cursor-pointer" {...form.register("stock_policy")} />
+                  <div className="flex flex-col">
+                    <span className="font-bold text-foreground group-hover:text-primary transition-colors">전체 구매 취소</span>
+                    <span className="text-sm text-muted-foreground mt-1">하나라도 재고가 부족하면 주문을 취소합니다.</span>
+                  </div>
                 </label>
               </div>
             </div>
 
-            <div className="space-y-4 pt-4">
-              <div className="flex flex-col space-y-1">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" className="w-5 h-5 accent-[#e94d2f]" {...form.register("privacy_agreed")} />
-                  <span className="text-sm font-medium">
-                    <Link href="/privacy" target="_blank" className="text-[#e94d2f] hover:underline">개인정보 수집·이용 안내</Link>에 동의합니다.
+            <div className="space-y-4 pt-6 border-t border-border/40">
+              <div className="flex flex-col space-y-2">
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" className="w-5 h-5 accent-primary rounded cursor-pointer" {...form.register("privacy_agreed")} />
+                  <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                    <Link href="/privacy" target="_blank" className="text-primary hover:underline font-semibold">개인정보 수집·이용 안내</Link>에 동의합니다.
                   </span>
                 </label>
                 {form.formState.errors.privacy_agreed && (
-                  <p className="text-sm text-red-500 ml-8">{form.formState.errors.privacy_agreed.message}</p>
+                  <p className="text-sm font-medium text-destructive ml-8">{form.formState.errors.privacy_agreed.message}</p>
                 )}
               </div>
 
-              <div className="flex flex-col space-y-1">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" className="w-5 h-5 accent-[#e94d2f]" {...form.register("policy_agreed")} />
-                  <span className="text-sm font-medium">
-                    <Link href="/terms" target="_blank" className="text-[#e94d2f] hover:underline">구매·재고·계좌이체·취소 정책</Link>을 확인했습니다.
+              <div className="flex flex-col space-y-2">
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <input type="checkbox" className="w-5 h-5 accent-primary rounded cursor-pointer" {...form.register("policy_agreed")} />
+                  <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                    <Link href="/terms" target="_blank" className="text-primary hover:underline font-semibold">구매·재고·계좌이체·취소 정책</Link>을 확인했습니다.
                   </span>
                 </label>
                 {form.formState.errors.policy_agreed && (
-                  <p className="text-sm text-red-500 ml-8">{form.formState.errors.policy_agreed.message}</p>
+                  <p className="text-sm font-medium text-destructive ml-8">{form.formState.errors.policy_agreed.message}</p>
                 )}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50">
-          <div className="max-w-4xl mx-auto flex justify-between items-center px-2">
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-card/85 backdrop-blur-xl border-t border-border/50 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-40 transition-colors">
+          <div className="max-w-4xl mx-auto flex justify-between items-center px-2 md:px-4">
             <div>
-              <span className="text-slate-500 text-sm hidden md:inline-block">선택 수량</span>
-              <strong className="block text-xl md:text-2xl">{totalItems}개</strong>
+              <span className="text-muted-foreground text-sm font-medium hidden md:block">선택 수량</span>
+              <strong className="block text-2xl md:text-3xl font-black text-foreground">{totalItems}개</strong>
             </div>
-            <Button size="lg" className="w-48 md:w-64 text-base" disabled={busy} type="submit">
+            <Button size="lg" className="w-48 md:w-64 text-base font-bold rounded-xl shadow-lg transition-transform active:scale-[0.98]" disabled={busy} type="submit">
               {busy ? "서버 견적 확인 중…" : "금액 확인하기"}
             </Button>
           </div>
         </div>
       </form>
+
+      {isPostcodeOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm" onClick={() => setIsPostcodeOpen(false)}>
+          <div className="relative w-full max-w-lg overflow-hidden rounded-[24px] bg-card border border-border/50 shadow-2xl animate-in fade-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-border/40 px-6 py-4 bg-card-muted/30">
+              <h2 className="text-lg font-extrabold text-foreground tracking-tight">우편번호 찾기</h2>
+              <button type="button" onClick={() => setIsPostcodeOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors p-1">✕</button>
+            </div>
+            <div className="h-[450px]">
+              <DaumPostcodeEmbed onComplete={handlePostcodeComplete} style={{ height: "100%" }} />
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

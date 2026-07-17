@@ -127,9 +127,9 @@ export function ReviewClient({ nonce }: { nonce?: string }) {
   if (!review || now === null) {
     return (
       <main className="w-full max-w-3xl mx-auto px-4 py-12 pb-24">
-        <Card className="flex flex-col items-center justify-center p-12 text-center shadow-sm">
-          <LoaderCircle className="animate-spin text-[#e94d2f] mb-6" size={48} aria-hidden="true" />
-          <h1 className="text-2xl font-bold">구매내역을 불러오고 있습니다</h1>
+        <Card className="flex flex-col items-center justify-center p-12 text-center shadow-sm border border-border/50 bg-card rounded-[24px]">
+          <LoaderCircle className="animate-spin text-primary mb-6" size={48} aria-hidden="true" />
+          <h1 className="text-2xl font-bold text-foreground">구매내역을 불러오고 있습니다</h1>
         </Card>
       </main>
     );
@@ -160,7 +160,7 @@ export function ReviewClient({ nonce }: { nonce?: string }) {
           <li
             key={step}
             className={`flex-1 text-center text-xs sm:text-sm font-bold border-t-4 pt-2 transition-colors ${
-              index <= 1 ? "border-[#e94d2f] text-slate-900" : "border-slate-200 text-slate-400"
+              index <= 1 ? "border-primary text-foreground" : "border-border text-muted-foreground"
             }`}
             aria-current={index === 1 ? "step" : undefined}
           >
@@ -170,74 +170,74 @@ export function ReviewClient({ nonce }: { nonce?: string }) {
       </ol>
 
       <div className="mb-8">
-        <span className="inline-flex gap-2 items-center text-[#e94d2f] text-xs font-black tracking-widest uppercase mb-2">ORDER REVIEW</span>
-        <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-4">구매내역을 확인해 주세요</h1>
-        <p className="text-slate-500">
+        <span className="inline-flex gap-2 items-center text-primary text-xs font-black tracking-widest uppercase mb-2">ORDER REVIEW</span>
+        <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-4 text-foreground">구매내역을 확인해 주세요</h1>
+        <p className="text-muted-foreground">
           표시된 견적은 재고 예약이 아니며 주문 확정 시 서버가 다시 검증합니다.
         </p>
       </div>
 
       {invalidated && (
-        <div className="p-4 mb-6 bg-red-50 border border-red-200 rounded-xl text-red-800" role="alert">
+        <div className="p-4 mb-6 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive" role="alert">
           {invalidationMessage}
         </div>
       )}
 
       {expired && !invalidated && (
-        <div className="p-4 mb-6 bg-red-50 border border-red-200 rounded-xl text-red-800 flex items-center gap-3" role="alert">
+        <div className="p-4 mb-6 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive flex items-center gap-3" role="alert">
           <Clock3 size={18} className="shrink-0" />
           <p>견적 유효시간이 지났습니다. 기존 견적으로 주문할 수 없습니다.</p>
         </div>
       )}
 
-      <Card className="mb-6 shadow-sm">
-        <CardHeader>
-          <CardTitle>상품과 금액</CardTitle>
+      <Card className="mb-6 shadow-sm border border-border/50 bg-card rounded-[24px]">
+        <CardHeader className="border-b border-border/40 bg-card-muted/20 px-6 py-4">
+          <CardTitle className="text-foreground">상품과 금액</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-0">
+        <CardContent className="space-y-0 p-6">
           {review.quote.lines.map((line) => (
             <div
-              className={`flex justify-between items-center py-4 border-b border-slate-100 ${
+              className={`flex justify-between items-center py-4 border-b border-border/40 ${
                 !line.accepted ? "opacity-50 line-through" : ""
               }`}
               key={line.product_id}
             >
               <div className="flex flex-col">
-                <strong className="text-lg">{line.product_name}</strong>
-                <span className="text-sm text-slate-500 mt-1">
+                <strong className="text-lg text-foreground">{line.product_name}</strong>
+                <span className="text-sm text-muted-foreground mt-1">
                   {line.quantity}개 × {formatMoney(line.unit_price)}
                   {!line.accepted &&
                     ` · 재고 부족으로 제외 예정 (구매 가능 ${line.available_quantity}개)`}
                 </span>
               </div>
-              <strong className="text-lg whitespace-nowrap ml-4">
+              <strong className="text-lg whitespace-nowrap ml-4 text-foreground">
                 {line.accepted ? formatMoney(line.line_amount) : "제외"}
               </strong>
             </div>
           ))}
-          <div className="flex justify-between items-center py-4 border-b border-slate-100">
-            <span className="text-slate-500">재고 부족 처리</span>
-            <strong className="font-bold">
+          <div className="flex justify-between items-center py-4 border-b border-border/40">
+            <span className="text-muted-foreground">재고 부족 처리</span>
+            <strong className="font-bold text-foreground">
               {review.draft.stockPolicy === "partial"
                 ? "가능한 상품만 구매"
                 : "하나라도 부족하면 전체 취소"}
             </strong>
           </div>
-          <div className="flex justify-between items-center py-5 border-b border-slate-100 text-xl font-black">
-            <span>상품 금액</span>
-            <strong>{formatMoney(review.quote.subtotal)}</strong>
+          <div className="flex justify-between items-center py-5 border-b border-border/40 text-xl font-black">
+            <span className="text-foreground">상품 금액</span>
+            <strong className="text-foreground">{formatMoney(review.quote.subtotal)}</strong>
           </div>
           {review.quote.discount_amount > 0 && (
-            <div className="flex justify-between items-center py-4 border-b border-slate-100 text-green-700">
+            <div className="flex justify-between items-center py-4 border-b border-border/40 text-green-600 dark:text-green-400">
               <span>쿠폰·행사 할인</span>
               <strong>-{formatMoney(review.quote.discount_amount)}</strong>
             </div>
           )}
-          <div className="flex justify-between items-center py-5 border-b border-slate-100 text-xl font-black">
-            <span>최종 입금 예정액</span>
-            <strong className="text-[#e94d2f] text-2xl">{formatMoney(review.quote.payment_amount)}</strong>
+          <div className="flex justify-between items-center py-5 border-b border-border/40 text-xl font-black">
+            <span className="text-foreground">최종 입금 예정액</span>
+            <strong className="text-primary text-2xl">{formatMoney(review.quote.payment_amount)}</strong>
           </div>
-          <div className="pt-4 text-sm text-slate-500">
+          <div className="pt-4 text-sm text-muted-foreground">
             견적 유효시간:{" "}
             <span className="font-mono">
               {Number.isFinite(expiresAt)
@@ -248,78 +248,78 @@ export function ReviewClient({ nonce }: { nonce?: string }) {
         </CardContent>
       </Card>
 
-      <Card className="mb-6 shadow-sm">
-        <CardHeader>
-          <CardTitle>수취인과 배송</CardTitle>
+      <Card className="mb-6 shadow-sm border border-border/50 bg-card rounded-[24px]">
+        <CardHeader className="border-b border-border/40 bg-card-muted/20 px-6 py-4">
+          <CardTitle className="text-foreground">수취인과 배송</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex justify-between items-center pb-4 border-b border-slate-100">
-            <span className="text-slate-500">수취인명</span>
-            <strong className="font-bold">{review.draft.buyerName}</strong>
+        <CardContent className="space-y-4 p-6">
+          <div className="flex justify-between items-center pb-4 border-b border-border/40">
+            <span className="text-muted-foreground">수취인명</span>
+            <strong className="font-bold text-foreground">{review.draft.buyerName}</strong>
           </div>
-          <div className="flex justify-between items-center pb-4 border-b border-slate-100">
-            <span className="text-slate-500">전화번호</span>
-            <strong className="font-bold">{review.draft.phone}</strong>
+          <div className="flex justify-between items-center pb-4 border-b border-border/40">
+            <span className="text-muted-foreground">전화번호</span>
+            <strong className="font-bold text-foreground">{review.draft.phone}</strong>
           </div>
-          <div className="flex flex-col md:flex-row md:justify-between md:items-center pb-4 border-b border-slate-100 gap-2">
-            <span className="text-slate-500 whitespace-nowrap">전체 주소</span>
-            <strong className="font-bold md:text-right">{review.draft.address}</strong>
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center pb-4 border-b border-border/40 gap-2">
+            <span className="text-muted-foreground whitespace-nowrap">전체 주소</span>
+            <strong className="font-bold md:text-right text-foreground">{review.draft.address}</strong>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-slate-500">배송사</span>
-            <strong className="font-bold flex items-center gap-2">
+            <span className="text-muted-foreground">배송사</span>
+            <strong className="font-bold flex items-center gap-2 text-foreground">
               <Truck size={17} /> CU(롯데택배)
             </strong>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="mb-8 shadow-sm">
-        <CardHeader>
-          <CardTitle>알림과 사람 확인</CardTitle>
+      <Card className="mb-8 shadow-sm border border-border/50 bg-card rounded-[24px]">
+        <CardHeader className="border-b border-border/40 bg-card-muted/20 px-6 py-4">
+          <CardTitle className="text-foreground">알림과 사람 확인</CardTitle>
           <CardDescription>
             푸시는 상태 변경 신호이며, 실제 상태는 주문 조회 API로 다시 확인합니다.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 p-6">
           <Button
             type="button"
             variant="outline"
             onClick={enablePush}
             disabled={busy || !!pushToken}
-            className="w-full md:w-auto"
+            className="w-full md:w-auto font-bold border-primary text-primary hover:bg-primary/10 transition-colors"
           >
             <Bell size={17} className="mr-2" />
             {pushToken ? "알림 준비 완료" : "상태 변경 알림 받기"}
           </Button>
           
-          <div className="pt-4 border-t border-slate-100">
-            <h3 className="font-bold mb-4">사람인지 확인</h3>
+          <div className="pt-6 border-t border-border/40">
+            <h3 className="font-bold mb-4 text-foreground">사람인지 확인</h3>
             <div className="mb-4">
               <TurnstileWidget ref={turnstile} nonce={nonce} onToken={setCaptcha} />
             </div>
-            <div className="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-sm">
-              <ShieldCheck size={18} className="text-[#18794e] shrink-0" />
+            <div className="flex items-center gap-3 p-4 bg-card-muted/50 border border-border/50 rounded-xl text-muted-foreground text-sm">
+              <ShieldCheck size={18} className="text-primary shrink-0" />
               <p>서버가 가격·재고·견적 토큰을 최종 검증합니다.</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50">
-        <div className="max-w-3xl mx-auto flex justify-between items-center gap-4 px-2">
-          <Button variant="outline" size="lg" disabled={busy} onClick={modify} className="w-1/3">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-card/85 backdrop-blur-xl border-t border-border/50 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-40 transition-colors">
+        <div className="max-w-3xl mx-auto flex justify-between items-center gap-4 px-2 md:px-4">
+          <Button variant="outline" size="lg" disabled={busy} onClick={modify} className="w-1/3 font-bold border-border/50 bg-card-muted/30">
             수정
           </Button>
           
           {expired || invalidated ? (
-            <Button size="lg" className="w-2/3 text-base" onClick={modify}>
+            <Button size="lg" className="w-2/3 text-base font-bold shadow-lg transition-transform active:scale-[0.98]" onClick={modify}>
               새 견적 받기
             </Button>
           ) : (
             <Button
               size="lg"
-              className="w-2/3 text-base"
+              className="w-2/3 text-base font-bold shadow-lg transition-transform active:scale-[0.98]"
               disabled={busy || !captcha}
               onClick={confirm}
             >
