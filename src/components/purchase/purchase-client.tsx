@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertTriangle, LoaderCircle } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import DaumPostcodeEmbed from "react-daum-postcode";
 
 import { StepIndicator } from "@/components/ui/step-indicator";
 import { usePurchaseMachine } from "@/hooks/use-purchase-machine";
@@ -34,6 +33,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { KOREA_REGIONS, PROVINCES } from "@/lib/korea-regions";
 
 export function PurchaseClient() {
   const router = useRouter();
@@ -43,7 +43,6 @@ export function PurchaseClient() {
   const [quantities, setQuantities] = useState<Record<string, number>>(() =>
     quantitiesFromDraft(savedDraft),
   );
-  const [isPostcodeOpen, setIsPostcodeOpen] = useState(false);
 
   const form = useForm<BuyerForm>({
     resolver: zodResolver(buyerSchema),
@@ -129,22 +128,8 @@ export function PurchaseClient() {
     }
   };
 
-  const handlePostcodeComplete = (data: any) => {
-    let fullAddress = data.address;
-    let extraAddress = "";
-
-    if (data.addressType === "R") {
-      if (data.bname !== "") extraAddress += data.bname;
-      if (data.buildingName !== "") {
-        extraAddress += extraAddress !== "" ? `, ${data.buildingName}` : data.buildingName;
-      }
-      fullAddress += extraAddress !== "" ? ` (${extraAddress})` : "";
-    }
-
-    form.setValue("address", `[${data.zonecode}] ${fullAddress} `, { shouldValidate: true });
-    setIsPostcodeOpen(false);
-    document.getElementById("address")?.focus();
-  };
+  const selectedProvince = form.watch("address_province");
+  const cities = selectedProvince ? KOREA_REGIONS[selectedProvince] || [] : [];
 
   const quote = form.handleSubmit(() => {
     const draft = makeDraft();
@@ -287,23 +272,83 @@ export function PurchaseClient() {
               </div>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <Label htmlFor="address" className="text-sm font-semibold text-foreground">배송주소</Label>
-                <Button type="button" variant="outline" size="sm" onClick={() => setIsPostcodeOpen(true)} className="text-xs h-8">우편번호 찾기</Button>
+            <div className="space-y-4 pt-4">
+              <Label className="text-sm font-semibold text-foreground">배송주소</Label>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <select
+                    className="flex w-full rounded-xl border border-border bg-card-muted/30 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary h-10 appearance-none"
+                    {...form.register("address_province", {
+                      onChange: () => form.setValue("address_city", "", { shouldValidate: true })
+                    })}
+                  >
+                    <option value="">도/광역시/특별시 선택</option>
+                    {PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                  {form.formState.errors.address_province && (
+                    <p className="text-sm font-medium text-destructive">
+                      {form.formState.errors.address_province.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <select
+                    className="flex w-full rounded-xl border border-border bg-card-muted/30 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary h-10 appearance-none disabled:opacity-50"
+                    disabled={!selectedProvince}
+                    {...form.register("address_city")}
+                  >
+                    <option value="">시/군/구 선택</option>
+                    {cities.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  {form.formState.errors.address_city && (
+                    <p className="text-sm font-medium text-destructive">
+                      {form.formState.errors.address_city.message}
+                    </p>
+                  )}
+                </div>
               </div>
-              <textarea
-                id="address"
-                autoComplete="street-address"
-                className="flex w-full rounded-xl border border-border bg-card-muted/30 px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary min-h-[100px] resize-y"
-                aria-describedby={form.formState.errors.address ? "address-error" : undefined}
-                {...form.register("address")}
-              />
-              {form.formState.errors.address && (
-                <p id="address-error" className="text-sm font-medium text-destructive">
-                  {form.formState.errors.address.message}
-                </p>
-              )}
+
+              <div className="space-y-2">
+                <Input
+                  placeholder="도로명/지번 주소 (예: 세종대로 110)"
+                  className="rounded-xl border-border bg-card-muted/30 focus-visible:ring-primary"
+                  {...form.register("address_street")}
+                />
+                {form.formState.errors.address_street && (
+                  <p className="text-sm font-medium text-destructive">
+                    {form.formState.errors.address_street.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Input
+                    placeholder="상세주소 (예: 101동 202호)"
+                    className="rounded-xl border-border bg-card-muted/30 focus-visible:ring-primary"
+                    {...form.register("address_detail")}
+                  />
+                  {form.formState.errors.address_detail && (
+                    <p className="text-sm font-medium text-destructive">
+                      {form.formState.errors.address_detail.message}
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Input
+                    placeholder="건물명 (선택, 예: 서울시청)"
+                    className="rounded-xl border-border bg-card-muted/30 focus-visible:ring-primary"
+                    {...form.register("address_building")}
+                  />
+                  {form.formState.errors.address_building && (
+                    <p className="text-sm font-medium text-destructive">
+                      {form.formState.errors.address_building.message}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="space-y-4 pt-6 border-t border-border/40">
@@ -385,19 +430,6 @@ export function PurchaseClient() {
         </div>
       </form>
 
-      {isPostcodeOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm" onClick={() => setIsPostcodeOpen(false)}>
-          <div className="relative w-full max-w-lg overflow-hidden rounded-[24px] bg-card border border-border/50 shadow-2xl animate-in fade-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-border/40 px-6 py-4 bg-card-muted/30">
-              <h2 className="text-lg font-extrabold text-foreground tracking-tight">우편번호 찾기</h2>
-              <button type="button" onClick={() => setIsPostcodeOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors p-1">✕</button>
-            </div>
-            <div className="h-[450px]">
-              <DaumPostcodeEmbed onComplete={handlePostcodeComplete} style={{ height: "100%" }} />
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   );
 }

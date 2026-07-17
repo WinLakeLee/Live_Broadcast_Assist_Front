@@ -11,6 +11,13 @@ export type CheckoutDraft = {
   buyerName: string;
   phone: string;
   address: string;
+  addressParts?: {
+    province: string;
+    city: string;
+    street: string;
+    building?: string;
+    detail: string;
+  };
   stockPolicy: StockPolicy;
   couponCode: string;
 };
@@ -18,7 +25,11 @@ export type CheckoutDraft = {
 export const emptyBuyerForm: BuyerForm = {
   buyer_name: "",
   phone: "",
-  address: "",
+  address_province: "",
+  address_city: "",
+  address_street: "",
+  address_building: "",
+  address_detail: "",
   stock_policy: "partial",
   coupon_code: "",
   privacy_agreed: false as true,
@@ -30,7 +41,11 @@ export function buyerFormFromDraft(draft: PurchaseDraft | null): BuyerForm {
   return {
     buyer_name: draft.buyerName,
     phone: draft.phone,
-    address: draft.address,
+    address_province: draft.addressParts?.province ?? "",
+    address_city: draft.addressParts?.city ?? "",
+    address_street: draft.addressParts?.street ?? "",
+    address_building: draft.addressParts?.building ?? "",
+    address_detail: draft.addressParts?.detail ?? "",
     stock_policy: draft.stockPolicy,
     coupon_code: draft.couponCode ?? "",
     privacy_agreed: true,
@@ -48,13 +63,28 @@ export function createCheckoutDraft(
   form: BuyerForm,
   quantities: Record<string, number>,
 ): CheckoutDraft {
+  const parts = [
+    form.address_province,
+    form.address_city,
+    form.address_street,
+    form.address_building ? `(${form.address_building})` : "",
+    form.address_detail
+  ].filter(Boolean);
+  
   return {
     items: Object.entries(quantities)
       .filter(([, quantity]) => quantity > 0)
       .map(([product_id, quantity]) => ({ product_id, quantity })),
     buyerName: form.buyer_name,
     phone: form.phone,
-    address: form.address,
+    address: parts.join(" "),
+    addressParts: {
+      province: form.address_province,
+      city: form.address_city,
+      street: form.address_street,
+      building: form.address_building,
+      detail: form.address_detail,
+    },
     stockPolicy: form.stock_policy,
     couponCode: form.coupon_code,
   };

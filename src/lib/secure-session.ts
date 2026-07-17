@@ -15,6 +15,13 @@ export type PurchaseDraft = {
   buyerName: string;
   phone: string;
   address: string;
+  addressParts?: {
+    province: string;
+    city: string;
+    street: string;
+    building?: string;
+    detail: string;
+  };
   stockPolicy: StockPolicy;
   couponCode: string;
 };

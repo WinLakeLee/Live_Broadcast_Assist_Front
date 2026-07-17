@@ -96,9 +96,9 @@ export function ProductSelector({
       case "list-compact": return "flex flex-col border border-border/50 rounded-2xl divide-y divide-border/40 overflow-hidden";
       case "list": return "flex flex-col gap-3";
       case "list-detail": return "grid grid-cols-1 gap-4";
-      case "tile": return "grid grid-cols-1 md:grid-cols-2 gap-4";
-      case "grid-card": return "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4";
-      case "gallery": return "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6";
+      case "tile": return "grid grid-cols-1 lg:grid-cols-2 gap-4";
+      case "grid-card": return "grid gap-3 sm:gap-4 grid-cols-[repeat(auto-fill,minmax(220px,1fr))]";
+      case "gallery": return "grid gap-4 sm:gap-6 grid-cols-[repeat(auto-fill,minmax(300px,1fr))]";
     }
   };
 
@@ -209,19 +209,19 @@ export function ProductSelector({
             if (viewMode === "gallery") {
               return (
                 <article key={product.product_id} className={`relative rounded-3xl overflow-hidden group border border-border/20 shadow-sm ${soldout ? "opacity-60 grayscale-[0.5]" : ""}`}>
-                  <div className="aspect-[4/3] sm:aspect-video md:aspect-[4/3] bg-card-muted/80 flex items-center justify-center">
+                  <div className="aspect-[4/3] bg-card-muted/80 flex items-center justify-center overflow-hidden">
                     {imgUrl ? (
                       <img src={imgUrl} alt={product.product_name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
                     ) : (
-                      <ImageIcon size={64} className="text-muted-foreground/20" />
+                      <ImageIcon size={120} className="text-muted-foreground/5" />
                     )}
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex flex-col justify-end p-4 sm:p-5">
                     <h3 className="text-lg sm:text-xl font-bold text-white line-clamp-2 mb-1 drop-shadow-md leading-tight">{product.product_name}</h3>
                     {metaString && <p className="text-xs sm:text-sm text-white/80 truncate drop-shadow-sm mb-3">{metaString}</p>}
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-xl sm:text-2xl font-black text-white drop-shadow-md">{formatMoney(product.unit_price, locale)}</span>
-                      {renderQtyControl(product, value, soldout, "light")}
+                    <div className="flex flex-wrap items-center justify-between gap-3 mt-auto">
+                      <span className="text-xl sm:text-2xl font-black text-white drop-shadow-md whitespace-nowrap">{formatMoney(product.unit_price, locale)}</span>
+                      <div className="shrink-0">{renderQtyControl(product, value, soldout, "light")}</div>
                     </div>
                   </div>
                 </article>
