@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ExternalLink, LoaderCircle, Radio } from "lucide-react";
+import { ExternalLink, History, LoaderCircle, Radio } from "lucide-react";
 
 import { getBroadcast } from "@/lib/api/broadcast";
 import { UnifiedChat } from "./unified-chat";
@@ -34,9 +35,16 @@ export function BroadcastPanel() {
   if (broadcast.isError || !broadcast.data?.capabilities.video_embed) {
     return (
       <Card className="mb-6">
-        <CardContent className="flex items-center gap-3 p-6 text-slate-600">
+        <CardContent className="flex flex-wrap items-center gap-3 p-6 text-slate-600">
           <Radio aria-hidden="true" />
           현재 사이트에서 재생할 라이브 방송이 없습니다.
+          <Link
+            className="inline-flex items-center gap-1 font-semibold text-[#1777d2] hover:underline"
+            href="/broadcasts"
+          >
+            <History size={16} aria-hidden="true" />
+            지난 방송 다시보기
+          </Link>
         </CardContent>
       </Card>
     );
@@ -49,9 +57,23 @@ export function BroadcastPanel() {
   return (
     <Card className="mb-6 overflow-hidden">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex flex-wrap items-center gap-2">
           <Radio className="text-red-600" aria-hidden="true" />
-          라이브 방송
+          {data.broadcast.status === "live" && data.broadcast.title
+            ? data.broadcast.title
+            : "라이브 방송"}
+          {data.broadcast.status === "live" && (
+            <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs font-bold text-white">
+              LIVE
+            </span>
+          )}
+          <Link
+            className="ml-auto inline-flex items-center gap-1 text-sm font-semibold text-[#1777d2] hover:underline"
+            href="/broadcasts"
+          >
+            <History size={16} aria-hidden="true" />
+            지난 방송
+          </Link>
         </CardTitle>
       </CardHeader>
       <CardContent className="grid gap-4 p-0 md:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.8fr)]">

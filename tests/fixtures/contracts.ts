@@ -18,7 +18,15 @@ export const makeProduct = (overrides: Partial<Product> = {}): Product => ({
   display_order: 1,
   purchase_method: "fixed_price",
   reserve_price: 0,
+  minimum_offer_price: 0,
+  maximum_offer_price: 0,
+  buy_now_price: 0,
   bid_increment: 0,
+  bid_input_mode: "direct_amount",
+  auction_extension_window_seconds: 0,
+  auction_extension_seconds: 0,
+  auction_max_extensions: 0,
+  auction_extension_count: 0,
   sale_starts_at: "",
   sale_ends_at: "",
   purchase_flow: "checkout",
@@ -80,6 +88,12 @@ export const makeOrderStatus = (
 
 export const broadcastData = {
   platform: "youtube",
+  broadcast: {
+    broadcast_id: "0123456789abcdef0123456789abcdef",
+    title: "오늘의 라이브",
+    status: "live",
+    started_at: "2026-07-17T10:00:00.000000+00:00",
+  },
   video_id: "video-id",
   embed_url: "https://www.youtube-nocookie.com/embed/video-id",
   chat_embed_url:

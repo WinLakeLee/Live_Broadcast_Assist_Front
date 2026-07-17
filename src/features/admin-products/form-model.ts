@@ -36,7 +36,14 @@ export const adminProductFormSchema = z.object({
     "blind_auction",
   ]),
   reserve_price: z.number().int().nonnegative(),
+  minimum_offer_price: z.number().int().nonnegative(),
+  maximum_offer_price: z.number().int().nonnegative(),
+  buy_now_price: z.number().int().nonnegative(),
   bid_increment: z.number().int().nonnegative(),
+  bid_input_mode: z.enum(["direct_amount", "incremental"]),
+  auction_extension_window_seconds: z.number().int().nonnegative(),
+  auction_extension_seconds: z.number().int().nonnegative(),
+  auction_max_extensions: z.number().int().nonnegative(),
   sale_starts_at: z.string(),
   sale_ends_at: z.string(),
   sku: z.string().max(100),
@@ -101,6 +108,60 @@ export const adminProductFormSchema = z.object({
   if (value.purchase_method === "reverse_auction" && value.reserve_price >= value.unit_price) {
     context.addIssue({ code: "custom", path: ["reserve_price"], message: "역경매 하한가는 시작가보다 낮아야 합니다." });
   }
+  if (value.purchase_method === "blind_auction" && value.bid_input_mode === "incremental") {
+    context.addIssue({ code: "custom", path: ["bid_input_mode"], message: "블라인드 경매는 직접 금액 입력만 사용할 수 있습니다." });
+  }
+  if (value.minimum_offer_price > 0 && value.maximum_offer_price > 0 && value.minimum_offer_price > value.maximum_offer_price) {
+    context.addIssue({ code: "custom", path: ["minimum_offer_price"], message: "최소 제안가는 최대 제안가보다 클 수 없습니다." });
+  }
+  if (value.minimum_offer_price > 0 && value.unit_price < value.minimum_offer_price) {
+    context.addIssue({ code: "custom", path: ["unit_price"], message: "시작가는 설정된 최소 제안가 이상이어야 합니다." });
+  }
+  if (value.maximum_offer_price > 0 && value.unit_price > value.maximum_offer_price) {
+    context.addIssue({ code: "custom", path: ["unit_price"], message: "시작가는 설정된 최대 제안가 이하여야 합니다." });
+  }
+  if (value.buy_now_price > 0) {
+    if (value.minimum_offer_price > 0 && value.buy_now_price < value.minimum_offer_price) {
+      context.addIssue({ code: "custom", path: ["buy_now_price"], message: "즉시 낙찰가는 최소 제안가 이상이어야 합니다." });
+    }
+    if (value.maximum_offer_price > 0 && value.buy_now_price > value.maximum_offer_price) {
+      context.addIssue({ code: "custom", path: ["buy_now_price"], message: "즉시 낙찰가는 최대 제안가 이하여야 합니다." });
+    }
+    if (value.purchase_method === "reverse_auction" && value.buy_now_price > value.unit_price) {
+      context.addIssue({ code: "custom", path: ["buy_now_price"], message: "역경매 즉시 낙찰가는 시작가 이하여야 합니다." });
+    }
+    if (value.purchase_method !== "reverse_auction" && value.buy_now_price < value.unit_price) {
+      context.addIssue({ code: "custom", path: ["buy_now_price"], message: "일반·블라인드 경매의 즉시 낙찰가는 시작가 이상이어야 합니다." });
+    }
+  }
+  const extensionSettings = [
+    value.auction_extension_window_seconds,
+    value.auction_extension_seconds,
+    value.auction_max_extensions,
+  ];
+  const positiveSettings = extensionSettings.filter((setting) => setting > 0).length;
+  if (positiveSettings > 0 && positiveSettings < extensionSettings.length) {
+    context.addIssue({
+      code: "custom",
+      path: ["auction_extension_window_seconds"],
+      message: "자동 연장은 감지 구간·연장 시간·최대 횟수를 모두 설정하거나 모두 0이어야 합니다.",
+    });
+  }
+  if (
+    positiveSettings === extensionSettings.length &&
+    value.sale_starts_at &&
+    value.sale_ends_at
+  ) {
+    const durationSeconds =
+      (new Date(value.sale_ends_at).getTime() - new Date(value.sale_starts_at).getTime()) / 1000;
+    if (value.auction_extension_window_seconds > durationSeconds) {
+      context.addIssue({
+        code: "custom",
+        path: ["auction_extension_window_seconds"],
+        message: "연장 감지 구간은 최초 경매 제한시간보다 길 수 없습니다.",
+      });
+    }
+  }
 });
 
 export type AdminProductForm = z.infer<typeof adminProductFormSchema>;
@@ -114,7 +175,14 @@ export const blankAdminProductForm: AdminProductForm = {
   display_order: 1,
   purchase_method: "fixed_price",
   reserve_price: 0,
+  minimum_offer_price: 0,
+  maximum_offer_price: 0,
+  buy_now_price: 0,
   bid_increment: 0,
+  bid_input_mode: "direct_amount",
+  auction_extension_window_seconds: 0,
+  auction_extension_seconds: 0,
+  auction_max_extensions: 0,
   sale_starts_at: "",
   sale_ends_at: "",
   sku: "",
@@ -152,7 +220,14 @@ export function productToAdminForm(product?: Product): AdminProductForm {
     display_order: product.display_order,
     purchase_method: product.purchase_method,
     reserve_price: product.reserve_price,
+    minimum_offer_price: product.minimum_offer_price,
+    maximum_offer_price: product.maximum_offer_price,
+    buy_now_price: product.buy_now_price,
     bid_increment: product.bid_increment,
+    bid_input_mode: product.bid_input_mode,
+    auction_extension_window_seconds: product.auction_extension_window_seconds,
+    auction_extension_seconds: product.auction_extension_seconds,
+    auction_max_extensions: product.auction_max_extensions,
     sale_starts_at: optionalAuctionDateTime(product.sale_starts_at),
     sale_ends_at: optionalAuctionDateTime(product.sale_ends_at),
     sku: product.sku,
@@ -193,7 +268,14 @@ export function adminFormToInput(form: AdminProductForm): AdminProductInput {
   return {
     ...base,
     reserve_price: isAuction ? base.reserve_price : 0,
+    minimum_offer_price: isAuction ? base.minimum_offer_price : 0,
+    maximum_offer_price: isAuction ? base.maximum_offer_price : 0,
+    buy_now_price: isAuction ? base.buy_now_price : 0,
     bid_increment: isAuction ? base.bid_increment : 0,
+    bid_input_mode: isAuction ? base.bid_input_mode : "direct_amount",
+    auction_extension_window_seconds: isAuction ? base.auction_extension_window_seconds : 0,
+    auction_extension_seconds: isAuction ? base.auction_extension_seconds : 0,
+    auction_max_extensions: isAuction ? base.auction_max_extensions : 0,
     sale_starts_at: isAuction && base.sale_starts_at ? new Date(base.sale_starts_at).toISOString() : null,
     sale_ends_at: isAuction && base.sale_ends_at ? new Date(base.sale_ends_at).toISOString() : null,
     expected_arrival_date: base.expected_arrival_date || null,

@@ -1,7 +1,25 @@
 # Live Broadcast Assist 공통 API 계약
 
-- 계약 버전: `2.0.1`
-- 기준일: `2026-07-16`
+- 계약 버전: `3.5.0`
+
+### 3.5.0 Auction inventory import
+
+`POST /admin/api/auction-imports/analyze` is an administrator-only, review-only endpoint.
+Send exactly one of `source_text` or `images`. Text accepts one item per line in the forms
+`name`, `name, quantity`, `name | quantity`, and `name x quantity`; blank and `#` lines are ignored.
+
+Images accept JPEG, PNG, or WebP records (`filename`, `content_type`, `data_base64`). They are processed
+in memory only and are not stored by this API. Image extraction requires `AUCTION_ANALYZER_URL`; an absent
+or unavailable provider returns `503`.
+
+Success code: `AUCTION_IMPORT_ANALYZED`. Each result has `source`, `product_name`, `quantity`, `confidence`,
+and `match_status` (`matched` or `unmatched`). Only exact active-product matches contain `product_id`.
+`suggested_event_items` aggregates matched quantities as a reviewable input for `POST /admin/api/auction-events`;
+the endpoint never creates products or an auction event.
+
+The configured HTTPS analyzer receives task `auction_inventory_extraction`, the submitted images, and an
+expected item schema. Its accepted response is `{"items":[{"product_name":"string","quantity":1,"confidence":0.0}]}`.
+- 기준일: `2026-07-17`
 - 기준 저장소: `Live_Broadcast_Assist/docs/api_contract.md`
 - 적용 대상: FastAPI 백엔드와 `Live_Broadcast_Assist_Front` Next.js 프런트
 
@@ -21,6 +39,48 @@
   `product_id` 검증 및 실제 서버 smoke test 완료 조건을 명시한다.
 - 요청에 정의되지 않은 `product_name`을 `product_id`와 함께 보내도 `422`로 거부한다는
   2.0.0 규칙에 맞게 계약 검증 체크리스트의 상충 문구를 바로잡는다.
+
+### 3.0.0 변경 요약
+
+- `POST /orders`의 `quoted_subtotal`을 필수 필드로 변경하고, 할인 전 소계와 할인 후
+  `quoted_amount`를 모두 견적 HMAC에 결합한다.
+- 견적 토큰 payload를 v3로 올린다. 이전 형식의 미확정 견적 토큰은 주문 생성에 사용할 수
+  없으므로 프런트는 새 견적을 받아야 한다.
+- 일반 체크아웃의 최종 재고 예약은 `purchase_method=fixed_price` 상품만 허용한다. 경매 계열
+  상품은 할인 후 금액이 0원이더라도 주문으로 확정하지 않고 구매 제안 API를 사용한다.
+
+### 3.1.0 변경 요약
+
+- 경매 관리자 설정과 상품 응답에 선택형 `minimum_offer_price`, `maximum_offer_price`,
+  `buy_now_price`를 추가한다. `0`은 별도 경계를 설정하지 않았다는 뜻이다.
+- 일반·블라인드 경매는 `buy_now_price` 이상, 역경매는 해당 가격 이하의 유효 제안을 즉시
+  낙찰한다. 즉시 낙찰 뒤에는 이전 제안을 `lost`로 바꾸고 추가 제안을 거부한다.
+- 구매 제안 생성·상태 응답에 `result`와 `instant_win`을 추가한다.
+
+### 3.2.0 변경 요약
+
+- 기존 `sale_starts_at`·`sale_ends_at` 제한시간에 더해 마감 임박 유효 제안의 자동 연장을
+  `auction_extension_window_seconds`, `auction_extension_seconds`, `auction_max_extensions`로 설정한다.
+- 상품 응답에 서버가 누적한 `auction_extension_count`를 추가하고, 구매 제안 생성·상태 응답에
+  실제 `sale_ends_at`, `remaining_seconds`, 연장 발생 여부와 횟수를 제공한다.
+
+### 3.3.0 변경 요약
+
+- 경매 상품에 `bid_input_mode=direct_amount|incremental`을 추가한다. 기존 상품은
+  `direct_amount`를 기본값으로 유지한다.
+- `incremental`은 클라이언트가 금액을 보내지 않고 서버가 현재 최적가에서 정확히 1호가를
+  계산한다. `direct_amount`는 기존처럼 사용자가 금액을 입력한다.
+- 즉시 낙찰은 두 방식 모두 `buy_now=true`로 요청할 수 있으며 서버가 설정된
+  `buy_now_price`를 적용한다. 블라인드 경매는 `direct_amount`만 허용한다.
+
+### 3.4.0 변경 요약
+
+- 여러 상품과 수량을 하나의 경매 이벤트로 등록하고 `bundle`, `per_product`, `per_unit` 중
+  선택한 방식으로 독립 입찰 단위인 lot을 생성한다.
+- 관리자 `POST /admin/api/auction-events`, 공개 `GET /api/auction-events/{event_id}`와
+  `POST /api/auction-lots/{lot_id}/offers`를 추가한다.
+- lot별 입찰 순위·즉시 낙찰·자동 연장·비밀 토큰 상태를 분리하고, 이벤트에 배정된 상품의
+  기존 상품 단위 입찰은 차단한다.
 
 ## 1. 변경 규칙
 
@@ -192,6 +252,21 @@ FastAPI CORS는 다음을 허용해야 한다.
 - 경매 계열은 timezone이 포함된 시작·종료 시각과 1 이상의 `bid_increment`가 필수다.
 - `unit_price`는 고정가 또는 경매 시작가다. `reserve_price`는 일반/블라인드 경매의
   낙찰 하한 또는 역경매의 가격 하한이다.
+- `minimum_offer_price`와 `maximum_offer_price`는 모든 제안에 적용되는 공개 하한·상한이다.
+  `0`이면 해당 명시 경계가 없으며 기존 시작가·낙찰 하한·호가 단위 규칙은 계속 적용된다.
+- `buy_now_price`는 선택형 즉시 낙찰가다. 일반·블라인드 경매는 해당 가격 이상, 역경매는
+  해당 가격 이하의 유효 제안이 들어오면 종료시각 전이라도 즉시 낙찰된다.
+- `sale_starts_at`부터 `sale_ends_at`까지가 최초 경매 제한시간이다. 자동 연장은 마감까지 남은
+  시간이 `auction_extension_window_seconds` 이하일 때 유효 제안을 받으면
+  `auction_extension_seconds`만큼 종료시각을 미룬다. 최대 `auction_max_extensions`회까지만
+  적용하며 세 설정이 모두 `0`이면 고정 종료시각을 사용한다.
+- `auction_extension_count`는 서버가 관리하는 읽기 전용 누적 횟수다. 프런트는 로컬 타이머가
+  끝났다는 이유만으로 경매를 닫지 않고 최신 `sale_ends_at` 또는 `remaining_seconds`를 따른다.
+- `bid_input_mode=direct_amount`이면 사용자가 입찰 금액을 입력하고 요청의 `amount`로 보낸다.
+  `incremental`이면 금액 입력을 노출하지 않고 입찰 버튼만 제공한다. 서버는 일반 경매에서
+  현재 최고가 + `bid_increment`, 역경매에서 현재 최저가 - `bid_increment`를 계산한다.
+  각 방식의 첫 제안은 `unit_price`다. 블라인드 경매는 타인의 기준가를 노출하지 않기 위해
+  `direct_amount`만 사용할 수 있다.
 - 분류는 대분류→소분류→상세분류 순서이며 SKU와 입고예정일·실입고일을 함께 관리한다.
   `inventory_status`는 `unscheduled`, `scheduled`, `arrived` 중 서버가 계산한 값이다.
 - `catalog`은 상품 자체의 공통 정보, `listing`은 판매자별 판매 조건과 SKU,
@@ -203,6 +278,8 @@ FastAPI CORS는 다음을 허용해야 한다.
 
 대기실과 무관한 공개 endpoint다. 프런트는 공급자 URL을 직접 조합하지 않고 이 응답을
 iframe `src`로 사용한다. 현재 공급자는 YouTube이며 응답 형태는 다른 플랫폼에도 유지한다.
+어떤 영상이 라이브인지는 환경 변수가 아니라 서버의 `broadcasts` 기록에서 나오며,
+관리자가 방송 API로 라이브를 시작/종료하면 서버 재시작 없이 이 응답이 즉시 바뀐다.
 
 ```json
 {
@@ -211,6 +288,12 @@ iframe `src`로 사용한다. 현재 공급자는 YouTube이며 응답 형태는
   "message": "방송 임베드 정보입니다.",
   "data": {
     "platform": "youtube",
+    "broadcast": {
+      "broadcast_id": "0123456789abcdef0123456789abcdef",
+      "title": "오늘의 라이브",
+      "status": "live",
+      "started_at": "2026-07-17T10:00:00.000000+00:00"
+    },
     "video_id": "video-id",
     "embed_url": "https://www.youtube-nocookie.com/embed/video-id?playsinline=1&rel=0",
     "chat_embed_url": "https://www.youtube.com/live_chat?v=video-id&embed_domain=shop.example.com",
@@ -244,17 +327,70 @@ iframe `src`로 사용한다. 현재 공급자는 YouTube이며 응답 형태는
 }
 ```
 
-방송 미설정 시 URL은 빈 문자열이고 `video_embed`, `chat_embed`가 `false`다.
-`chat_embed_url`은 `BROADCAST_EMBED_ORIGIN`이 유효할 때만 제공한다.
-빈 `BROADCAST_VIDEO_ID`는 `YOUTUBE_VIDEO_ID`를 상속하며 영상 iframe, 채팅 iframe,
-`chat.video_id`는 항상 동일한 ID를 사용한다. YouTube 정책상 라이브 채팅 iframe은
+진행 중인 방송이 없으면 `broadcast.status`가 `offline`이고 URL은 빈 문자열이며
+`video_embed`, `chat_embed`가 `false`다. `chat_embed_url`은 `BROADCAST_EMBED_ORIGIN`이
+유효할 때만 제공한다. 영상 iframe, 채팅 iframe, `chat.video_id`는 항상 활성 방송의 동일한
+영상 ID를 사용한다. YouTube 정책상 라이브 채팅 iframe은
 `embed_domain`이 실제 부모 페이지 도메인과 일치해야 하고 모바일 웹에서는 지원되지 않는다.
 프런트는 `chat_embed_mobile_web=false`일 때 모바일에서 `watch_url`로 여는 대체 동선을 제공한다.
 모바일 쓰기는 자체 채팅에만 기록되며 YouTube로 재전송하지 않는다. YouTube 채팅은 공식
 `liveChatMessages.list` 수신 결과를 읽기 전용으로 같은 피드에 표시하고 출처 배지를 반드시
-붙인다. `youtube_read_enabled`는 공식 `YOUTUBE_API_KEY`가 있을 때만 `true`다. YouTube API
-데이터는 설정된 단기 보관기간 후 삭제하며 legacy `pytchat` 수신분을 피드에 복제하거나
-스크래핑으로 대체하지 않는다.
+붙인다. `youtube_read_enabled`는 공식 `YOUTUBE_API_KEY`가 있을 때만 `true`다. 방송에
+속하지 않은 임시 피드 데이터는 설정된 단기 보관기간 후 삭제하며 legacy `pytchat` 수신분을
+피드에 복제하거나 스크래핑으로 대체하지 않는다.
+
+### 방송 기록(과거 라이브) 조회
+
+#### `GET /api/broadcasts?limit=50`
+
+대기실과 무관한 공개 endpoint다. 최신 방송부터 정렬한 방송 기록 목록을 반환한다.
+
+```json
+{
+  "status": "success",
+  "code": "BROADCAST_HISTORY",
+  "message": "방송 기록 목록입니다.",
+  "data": {
+    "broadcasts": [
+      {
+        "broadcast_id": "0123456789abcdef0123456789abcdef",
+        "platform": "youtube",
+        "video_id": "video-id",
+        "title": "오늘의 라이브",
+        "status": "ended",
+        "started_at": "2026-07-17T10:00:00.000000+00:00",
+        "ended_at": "2026-07-17T12:00:00.000000+00:00"
+      }
+    ]
+  }
+}
+```
+
+#### `GET /api/broadcasts/{broadcast_id}`
+
+단일 방송 기록을 반환한다(`BROADCAST_DETAIL`). 종료된 방송의 다시보기 URL은 프런트가
+`video_id`로 `https://www.youtube.com/watch?v={video_id}`를 구성한다. 존재하지 않으면 `404`다.
+
+#### `GET /api/broadcasts/{broadcast_id}/chat/messages?after={cursor}&limit=100`
+
+해당 방송에 기록된 채팅 히스토리를 오래된 순으로 반환한다(`BROADCAST_CHAT_HISTORY`).
+응답 형식과 커서 규칙은 `GET /api/chat/messages`와 같되 `can_report`가 없다. 방송에 속한
+채팅 메시지는 라이브 피드 보관기간이 지나도 방송 기록과 함께 보존된다.
+
+### 관리자 방송 수명주기 API
+
+새 라이브를 시작할 때 서버를 재시작하지 않는다. 모두 관리자 키가 필요하다.
+
+- `POST /admin/api/broadcasts`: 방송을 시작한다. body는
+  `{"platform":"youtube","video_id":"video-id","channel_id":"","title":"오늘의 라이브"}`이며
+  `video_id` 또는 `channel_id` 중 하나는 필수다(`channel_id`만 주면 해당 채널의 현재
+  라이브를 자동 탐색). `platform`은 서버가 지원하는 플랫폼 이름이어야 하며(현재 `youtube`),
+  지원 플랫폼이 추가되어도 이 계약의 응답 형태는 유지된다. 진행 중이던 방송은 같은 요청에서 자동 종료되고
+  `ended_broadcast_ids`로 반환된다. 채팅 수신기와 `GET /api/broadcast`가 즉시 새 방송을 따른다.
+- `POST /admin/api/broadcasts/{broadcast_id}/end`: 방송을 종료한다(`BROADCAST_ENDED`).
+  진행 중이 아니면 `404`다.
+- `GET /admin/api/broadcasts?limit=50`: `live_chat_id`, `channel_id`를 포함한 방송 기록
+  목록이다(`ADMIN_BROADCASTS`).
 
 ### 자체·YouTube 통합 채팅 API
 
@@ -299,29 +435,88 @@ iframe `src`로 사용한다. 현재 공급자는 YouTube이며 응답 형태는
 - `GET /admin/api/chat/messages`: 신고 수와 작성 세션 ID를 포함한 관리자 moderation 목록이다.
 - `DELETE /admin/api/chat/messages/{message_id}`: 메시지를 숨긴다.
 - `POST /admin/api/chat/sessions/{session_id}/ban`: 세션을 차단하고 기존 자체 메시지를 숨긴다.
-- 자체·YouTube 임시 피드는 기본 24시간 후 삭제한다. 신고 사유도 대상 메시지 삭제 시 함께 삭제한다.
+- 방송에 속하지 않은 자체·YouTube 임시 피드는 기본 24시간 후 삭제한다. 방송 중 기록된
+  메시지는 해당 방송의 채팅 히스토리로 보존된다. 신고 사유는 대상 메시지 삭제 시 함께 삭제한다.
 
 ### `POST /api/products/by-id/{product_id}/offers`
 
 경매 계열 상품에 익명 구매 제안을 접수한다. 준비된 대기실 헤더가 필요하다.
+상품이 활성 경매 이벤트의 lot에 포함되어 있으면 이 endpoint는 `409`이며 lot 입찰 endpoint를
+사용해야 한다.
 
 ```json
 {"amount":15000,"quantity":1}
 ```
 
+위 요청은 `bid_input_mode=direct_amount`용이다. `incremental`은 금액을 보내지 않는다.
+
+```json
+{"quantity":1}
+```
+
+즉시 낙찰 버튼은 입력 방식과 관계없이 다음 요청을 사용한다. `amount`와 `buy_now=true`를 함께
+보내면 `422`이며, 즉시 낙찰가가 설정되지 않은 상품은 `409`다.
+
+```json
+{"buy_now":true,"quantity":1}
+```
+
 - `auction`: 첫 제안은 시작가 이상, 이후 제안은 현재 최고가 + 호가 단위 이상
 - `reverse_auction`: 시작가 이하에서 내려가며 최저가보다 낮을 수 없음
 - `blind_auction`: 다른 제안 가격을 공개하지 않고 최저 낙찰가 이상만 검증
+- 모든 방식에서 설정된 최소·최대 제안가를 벗어나면 `409`다.
+- `incremental` 상품에 임의 `amount`를 보내거나 `direct_amount` 상품에서 `amount`를 생략하면
+  `409`다. 증가식 계산 결과도 최소·최대·낙찰 하한을 벗어나면 거부한다.
+- 일반·블라인드 경매에서 `amount >= buy_now_price`, 역경매에서
+  `amount <= buy_now_price`이면 즉시 낙찰된다. 즉시 낙찰 뒤의 추가 제안은 `409`다.
 - 고정가 상품은 `409`이며 기존 견적/주문 API를 사용한다.
 
 성공 `data`에는 `offer_reference`, 한 번만 전달되는 `offer_token`, 상품·방식·금액·수량,
-`product_id`, `product_name`, `status=accepted`, `sale_ends_at`이 포함된다. 토큰은 주문 토큰과 동일하게 URL·로그에
+`product_id`, `product_name`, `bid_input_mode`, `status`, `result`, `instant_win`, `extended`, `extension_count`,
+`sale_ends_at`, `remaining_seconds`가 포함된다.
+일반 제안은 `status=accepted`, `result=pending`, `instant_win=false`이고 즉시 낙찰은
+`status=won`, `result=won`, `instant_win=true`다. 토큰은 주문 토큰과 동일하게 URL·로그에
 노출하지 않는다.
+
+마감 임박 유효 제안으로 자동 연장되면 `extended=true`, 갱신된 `sale_ends_at`과 누적
+`extension_count`를 반환한다. 즉시 낙찰은 시간을 연장하지 않고 `remaining_seconds=0`이다.
 
 ### `GET /api/purchase-offers/{offer_reference}`
 
-`X-Purchase-Offer-Token` 헤더가 필수다. 본인의 금액과 수량, 종료 전 `result=pending`,
-종료 후 `result=won|lost`를 반환한다. 블라인드 경매도 타인의 가격이나 순위를 반환하지 않는다.
+`X-Purchase-Offer-Token` 헤더가 필수다. 본인의 금액과 수량, 일반적으로 종료 전
+`result=pending`, 종료 후 `result=won|lost`를 반환한다. 즉시 낙찰이면 종료 전에도 낙찰자는
+`result=won`, 이전 제안자는 `result=lost`를 받는다. `instant_win`은 해당 제안이 즉시 낙찰
+제안인지 나타낸다. 블라인드 경매도 타인의 가격이나 순위를 반환하지 않는다.
+`extension_count`, 최신 `sale_ends_at`, `remaining_seconds`도 함께 반환하므로 상태 폴링 시
+클라이언트 제한시간을 서버 값으로 다시 맞춘다.
+
+### 다품목 경매 이벤트와 lot
+
+경매 이벤트는 여러 상품과 수량을 받아 다음 중 하나의 방식으로 lot을 생성한다. lot은 입찰
+순위·종료시각·즉시 낙찰 결과가 서로 섞이지 않는 최소 경매 단위다.
+
+- `bundle`: 선택한 모든 상품 종류와 수량을 하나의 lot으로 묶어 한 번에 경매한다.
+- `per_product`: 상품 종류마다 하나의 lot을 만들고 해당 종류의 지정 수량을 함께 경매한다.
+- `per_unit`: 지정한 모든 수량을 1개짜리 lot으로 나눈다. 한 이벤트에서 최대 100 lot이다.
+
+이벤트 원본 상품은 활성 경매 상품이어야 하며 요청 수량만큼 가용 재고가 있어야 한다. 같은
+상품은 동시에 둘 이상의 활성 이벤트에 배정할 수 없다. `bundle` 구성 상품은 구매 방식,
+가격 경계, 호가, 입찰 입력 방식, 제한시간과 자동 연장 설정이 모두 같아야 한다.
+
+### `GET /api/auction-events/{event_id}`
+
+공개 이벤트 정보와 생성된 `lots`를 반환한다. 각 lot에는 `lot_id`, 순서, 제목, 가격·시간 설정,
+`sale_status`, `remaining_seconds`, `items[{product_id,product_name,quantity}]`가 포함된다.
+
+### `POST /api/auction-lots/{lot_id}/offers`
+
+대기실 헤더가 필요하다. 요청 형식은 상품 입찰과 같은 `amount`/`buy_now` 계약을 사용하지만
+lot 전체가 나눌 수 없는 한 경매 단위이므로 `quantity`는 생략하거나 `1`만 보낸다.
+
+성공 code는 `AUCTION_LOT_OFFER_ACCEPTED`다. `data`에는 `event_id`, `lot_id`, `lot_mode`,
+lot의 전체 `items`, 서버 확정 금액과 입찰·시간 상태가 포함된다. 이후 상태는 같은
+`GET /api/purchase-offers/{offer_reference}`와 `X-Purchase-Offer-Token`으로 조회하며 lot 정보와
+품목 목록을 함께 반환한다.
 
 ### OrderItem
 
@@ -456,6 +651,8 @@ API 로직과 프런트 분기는 `status_code`만 사용한다. `status`는 사
 ```
 
 `stock_policy`는 `partial` 또는 `all_or_nothing`이다.
+`purchase_flow=checkout`인 `fixed_price` 상품만 이 견적을 주문으로 확정할 수 있다. 경매 계열은
+`purchase_flow=offer`를 따라 구매 제안 API를 사용한다.
 
 성공 `data`:
 
@@ -513,8 +710,13 @@ API 로직과 프런트 분기는 `status_code`만 사용한다. `status`는 사
 
 - `push_token`은 필드 자체는 필수지만 값은 선택이다. 알림 미동의·미지원 브라우저는 빈 문자열을 보낸다.
 - 비어 있지 않은 `push_token`은 16~4096자다.
+- `quoted_subtotal`과 `quoted_amount`는 모두 필수다. 각각 바로 전 견적의 `subtotal`과
+  `payment_amount`를 그대로 보내며, 프런트에서 재계산하지 않는다.
 - `quote_token`, 품목, 수량, 정책, 쿠폰, 할인 전·후 금액은 바로 전 견적과 정확히 같아야 한다.
+  하나라도 다르거나 이전 토큰 형식이면 `409 STATE_CONFLICT`로 거부한다.
 - 쿠폰·자동 할인은 서버가 활성기간, 최소주문금액, 정액/정률, 최대할인을 검증한다.
+- 최종 DB 행 잠금과 재고 예약 시 `purchase_method=fixed_price`를 다시 확인한다. 경매 계열이
+  포함되면 정책에 따라 취소되며, 견적 소계와 달라지므로 주문 생성은 `409 STATE_CONFLICT`로 끝난다.
 - 응답을 받지 못한 timeout은 결과가 불명확하므로 같은 요청을 자동 재전송하지 않는다.
 
 성공 `data`:
@@ -657,6 +859,18 @@ API 로직과 프런트 분기는 `status_code`만 사용한다. `status`는 사
   "stock_limit": 100,
   "active": true,
   "display_order": 1,
+  "purchase_method": "auction",
+  "reserve_price": 10000,
+  "minimum_offer_price": 10000,
+  "maximum_offer_price": 50000,
+  "buy_now_price": 45000,
+  "bid_increment": 1000,
+  "bid_input_mode": "incremental",
+  "auction_extension_window_seconds": 60,
+  "auction_extension_seconds": 120,
+  "auction_max_extensions": 3,
+  "sale_starts_at": "2026-07-17T10:00:00+09:00",
+  "sale_ends_at": "2026-07-17T12:00:00+09:00",
   "sku": "SKU-001",
   "catalog_item_id": "CAT-001",
   "seller_id": "direct",
@@ -685,11 +899,39 @@ API 로직과 프런트 분기는 `status_code`만 사용한다. `status`는 사
 - `sale_starts_at`, `sale_ends_at` 같은 선택 datetime과 `expected_arrival_date`, `arrival_date` 같은
   선택 date가 비어 있으면 요청에서 생략하거나 JSON `null`로 보낸다. 빈 문자열은 유효한
   date/datetime이 아니므로 보내지 않는다. 응답의 미설정 날짜는 기존 Product 표현대로 빈 문자열이다.
+- 고정가 상품은 모든 경매 가격과 호가 단위를 `0`, 경매 시각을 생략하거나 `null`로 보낸다.
+- 고정가 상품의 `bid_input_mode`는 `direct_amount`다. 경매 상품은 `direct_amount` 또는
+  `incremental`을 선택하며 블라인드 경매에 `incremental`을 지정하면 `422`다.
+- 고정가 상품은 자동 연장 설정도 모두 `0`으로 보낸다. 경매 상품에서 자동 연장을 사용하려면
+  연장 감지 구간·1회 연장 시간·최대 횟수를 모두 양수로 설정해야 하며 일부만 설정하면 `422`다.
+- 연장 감지 구간은 최초 `sale_starts_at`~`sale_ends_at` 기간보다 길 수 없다.
+- 경매의 시작가는 `unit_price`다. 최소가가 최대가보다 크거나 시작가가 설정된 최소·최대 범위를
+  벗어나면 `422`다. 즉시 낙찰가도 설정된 범위 안이어야 하며, 일반·블라인드 경매에서는
+  시작가 이상, 역경매에서는 시작가 이하여야 한다.
 
 상품 저장은 기존 체크아웃용 `products`와 카탈로그 상품, 변형 SKU, 판매자 리스팅,
 브랜드, 계층형 카테고리, 이미지/속성, 창고별 재고를 한 트랜잭션에서 함께 갱신한다.
 `catalog_item_id`가 비어 있으면 서버가 별도의 카탈로그 ID를 생성한다. `product_id`는 상품명,
 `catalog_item_id`, SKU와 독립된 내부 상품 식별자이며 상품명 기반으로 생성하지 않는다.
+
+### `POST /admin/api/auction-events`
+
+요청 헤더: `X-Admin-API-Key`
+
+```json
+{
+  "name": "여름 한정 경매",
+  "lot_mode": "per_product",
+  "items": [
+    {"product_id":"prd_01JZ8R7F6K2M4N8Q1T3V5W7X9Y","quantity":3},
+    {"product_id":"prd_01JZ8R7F6K2M4N8Q1T3V5W7X9Z","quantity":2}
+  ]
+}
+```
+
+서버가 `event_id`와 `alot_` 접두사의 lot ID를 발급한다. 성공 code는
+`AUCTION_EVENT_CREATED`이며 생성된 전체 lot과 품목 배정을 반환한다. 중복 상품 ID, 재고 초과,
+고정가 상품, 다른 활성 이벤트에 이미 포함된 상품은 거부한다.
 
 ### 관리자 프로모션 및 통계 API
 
@@ -716,8 +958,11 @@ API 로직과 프런트 분기는 `status_code`만 사용한다. `status`는 사
 ### 9.2. 결제 관련 보안 취약점 및 엣지 케이스 (Edge Cases)
 
 1. **가격 및 견적 위변조 (Price Manipulation)**
-   - `POST /orders` 요청 시 프런트가 전송하는 `quoted_amount` 및 `items`는 백엔드에서 `quote_token`의 단기 HMAC 서명 무결성을 거치며, 변조되거나 품목/수량이 불일치할 경우 거부된다.
-   - 추가로 DB 행 잠금(`FOR UPDATE`) 시점의 가격·재고를 다시 검사하여 위변조를 차단한다.
+   - `POST /orders` 요청 시 프런트가 전송하는 필수 `quoted_subtotal`, `quoted_amount`, `items`는
+     백엔드에서 `quote_token`의 단기 HMAC 서명 무결성을 거치며, 변조되거나 품목/수량이
+     불일치할 경우 거부된다.
+   - 추가로 DB 행 잠금(`FOR UPDATE`) 시점의 가격·재고·`purchase_method=fixed_price`를 다시
+     검사한다. 전액 할인으로 결제액이 0원이 되어도 경매 상품은 일반 체크아웃할 수 없다.
 2. **견적 만료 및 재고 선점 경쟁 (Race Condition)**
    - Redis 대기실의 `ready` 입장권을 원자적으로 1회 claim 성공한 뒤에만 주문이 확정되며, `quote_token` 만료 시간과 함께 동시성 및 재고 선점 경쟁을 방어한다.
    - 입금이 없는 `결제대기` 주문은 설정 기한 후 자동 `주문만료` 처리되고 DB 트랜잭션에서 예약 재고를 반환한다.
@@ -743,6 +988,19 @@ API 로직과 프런트 분기는 `status_code`만 사용한다. `status`는 사
 - Playwright mock이 `data.products` 등 실제 구조를 그대로 사용한다.
 - 대기실 비활성화와 만료의 `retry_after_seconds=0` fixture가 있다.
 - 푸시 토큰이 빈 주문과 유효 토큰 주문을 모두 검증한다.
+- 주문 요청에서 `quoted_subtotal` 누락을 `422`로 거부하고, 서명된 소계와 다른 값 및 이전
+  형식의 견적 토큰을 `409`로 거부한다.
+- 경매 계열 상품이 전액 할인과 결합되어도 일반 체크아웃 재고를 예약하거나 주문을 생성하지 않는다.
+- 관리자 경매 설정의 최소·최대·즉시 낙찰가 조합을 검증하고, 양방향 경매의 즉시 낙찰이
+  이전 제안을 `lost`로 전환하며 이후 제안을 `409`로 거부하는지 확인한다.
+- 마감 임박 유효 제안만 설정 범위와 최대 횟수 안에서 종료시각을 연장하고, 응답의
+  `remaining_seconds`와 `sale_ends_at`이 갱신되는지 검증한다.
+- `incremental`의 첫 제안과 후속 제안이 서버에서 정확히 시작가와 1호가로 계산되고 임의 금액은
+  거부하는지, `direct_amount`는 금액 누락을 거부하는지, `buy_now=true`가 서버 설정가를 쓰는지 검증한다.
+- `bundle`, `per_product`, `per_unit` 이벤트가 각각 1개·상품 종류 수·총 수량만큼 lot을 만들고,
+  lot 품목 수량과 재고 경계를 보존하며 서로 다른 lot의 입찰 순위가 섞이지 않는지 검증한다.
+- 활성 이벤트 상품의 기존 `/api/products/by-id/{product_id}/offers` 호출을 `409`로 거부하고,
+  lot 제안의 비밀 상태 조회가 해당 lot 품목만 반환하는지 검증한다.
 - 입금자 등록 응답과 전체 주문 상태 응답을 별도 schema로 검증한다.
 - 모든 상품·견적 line·주문 품목 응답에 동일한 `product_id`가 이어지는지 검증한다.
 - 상품명을 변경한 뒤에도 기존 `product_id`로 견적·주문·제안 조회가 성공하는지 검증한다.

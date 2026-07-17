@@ -185,7 +185,9 @@ describe("P1 API 모듈 회귀", () => {
     const input: AdminProductInput = {
       product_id: "",
       product_name: "상품", unit_price: 1, stock_limit: 0, active: true, display_order: 0,
-      purchase_method: "fixed_price", reserve_price: 0, bid_increment: 0, sale_starts_at: "", sale_ends_at: "",
+      purchase_method: "fixed_price", reserve_price: 0, minimum_offer_price: 0, maximum_offer_price: 0, buy_now_price: 0,
+      bid_increment: 0, bid_input_mode: "direct_amount", auction_extension_window_seconds: 0, auction_extension_seconds: 0,
+      auction_max_extensions: 0, sale_starts_at: "", sale_ends_at: "",
       sku: "SKU", category_major: "", category_minor: "", category_detail: "", expected_arrival_date: "", arrival_date: "",
       catalog_item_id: "", seller_id: "direct", brand_name: "", manufacturer: "", model_number: "", product_type: "GENERAL",
       description: "", condition_type: "new", parent_sku: "", barcode: "", option_values: {}, attributes: {}, image_urls: [],

@@ -97,7 +97,7 @@ export function ProductsAdminClient() {
       if (res.description) form.setValue("description", res.description);
       if (res.image_urls_text) form.setValue("image_urls_text", res.image_urls_text);
       setMessage("AI 식별에 성공했습니다. 폼 데이터를 확인해 주세요.");
-    } catch (err) {
+    } catch {
       setMessage("AI 식별에 실패했습니다.");
     } finally {
       setIdentifying(false);
@@ -258,6 +258,37 @@ export function ProductsAdminClient() {
           <div className="field">
             <label htmlFor="bid_increment">입찰 단위</label>
             <input id="bid_increment" type="number" min="0" {...form.register("bid_increment", { valueAsNumber: true })} />
+          </div>
+          <div className="field">
+            <label htmlFor="bid_input_mode">입찰 입력 방식</label>
+            <select id="bid_input_mode" {...form.register("bid_input_mode")}>
+              <option value="direct_amount">직접 금액 입력</option>
+              <option value="incremental">호가 자동 계산</option>
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="minimum_offer_price">최소 제안가 (0=미설정)</label>
+            <input id="minimum_offer_price" type="number" min="0" {...form.register("minimum_offer_price", { valueAsNumber: true })} />
+          </div>
+          <div className="field">
+            <label htmlFor="maximum_offer_price">최대 제안가 (0=미설정)</label>
+            <input id="maximum_offer_price" type="number" min="0" {...form.register("maximum_offer_price", { valueAsNumber: true })} />
+          </div>
+          <div className="field">
+            <label htmlFor="buy_now_price">즉시 낙찰가 (0=미설정)</label>
+            <input id="buy_now_price" type="number" min="0" {...form.register("buy_now_price", { valueAsNumber: true })} />
+          </div>
+          <div className="field">
+            <label htmlFor="auction_extension_window_seconds">연장 감지 구간(초)</label>
+            <input id="auction_extension_window_seconds" type="number" min="0" {...form.register("auction_extension_window_seconds", { valueAsNumber: true })} />
+          </div>
+          <div className="field">
+            <label htmlFor="auction_extension_seconds">1회 연장 시간(초)</label>
+            <input id="auction_extension_seconds" type="number" min="0" {...form.register("auction_extension_seconds", { valueAsNumber: true })} />
+          </div>
+          <div className="field">
+            <label htmlFor="auction_max_extensions">최대 연장 횟수</label>
+            <input id="auction_max_extensions" type="number" min="0" {...form.register("auction_max_extensions", { valueAsNumber: true })} />
           </div>
           <div className="field">
             <label htmlFor="sale_starts_at">판매 시작 시각</label>

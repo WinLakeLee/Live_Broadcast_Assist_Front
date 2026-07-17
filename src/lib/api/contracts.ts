@@ -1,8 +1,17 @@
 import { z } from "zod";
 
+export const broadcastStatusSchema = z.enum(["live", "ended", "offline"]);
+export const activeBroadcastSchema = z.object({
+  broadcast_id: z.string(),
+  title: z.string(),
+  status: broadcastStatusSchema,
+  started_at: z.string(),
+});
+
 export const broadcastSchema = z
   .object({
     platform: z.string(),
+    broadcast: activeBroadcastSchema,
     video_id: z.string(),
     embed_url: z.string(),
     chat_embed_url: z.string(),
@@ -46,6 +55,35 @@ export const broadcastSchema = z
   });
 export type BroadcastData = z.infer<typeof broadcastSchema>;
 
+export const broadcastRecordSchema = z.object({
+  broadcast_id: z.string(),
+  platform: z.string(),
+  video_id: z.string(),
+  title: z.string(),
+  status: broadcastStatusSchema,
+  started_at: z.string(),
+  ended_at: z.string(),
+});
+export type BroadcastRecord = z.infer<typeof broadcastRecordSchema>;
+export const broadcastHistorySchema = z.object({
+  broadcasts: z.array(broadcastRecordSchema),
+});
+
+export const adminBroadcastRecordSchema = broadcastRecordSchema.extend({
+  live_chat_id: z.string(),
+  channel_id: z.string(),
+});
+export type AdminBroadcastRecord = z.infer<typeof adminBroadcastRecordSchema>;
+export const adminBroadcastsSchema = z.object({
+  broadcasts: z.array(adminBroadcastRecordSchema),
+});
+export const broadcastStartedSchema = z
+  .object({
+    broadcast_id: z.string(),
+    ended_broadcast_ids: z.array(z.string()).default([]),
+  })
+  .loose();
+
 export const chatSessionSchema = z.object({
   session_id: z.string().regex(/^[a-f0-9]{32}$/),
   session_token: z.string().min(32),
@@ -68,6 +106,16 @@ export const chatFeedSchema = z.object({
 });
 export type ChatMessage = z.infer<typeof chatMessageSchema>;
 export type ChatFeed = z.infer<typeof chatFeedSchema>;
+
+export const broadcastChatMessageSchema = chatMessageSchema.omit({
+  can_report: true,
+});
+export const broadcastChatHistorySchema = z.object({
+  messages: z.array(broadcastChatMessageSchema),
+  next_cursor: z.string(),
+});
+export type BroadcastChatMessage = z.infer<typeof broadcastChatMessageSchema>;
+export type BroadcastChatHistory = z.infer<typeof broadcastChatHistorySchema>;
 
 export const waitingTicketSchema = z.object({
   enabled: z.boolean(),
@@ -102,7 +150,15 @@ export const productSchema = z.object({
   display_order: z.number().int().min(0).max(1_000_000),
   purchase_method: z.enum(["fixed_price", "auction", "reverse_auction", "blind_auction"]),
   reserve_price: z.number().int().nonnegative(),
+  minimum_offer_price: z.number().int().nonnegative().default(0),
+  maximum_offer_price: z.number().int().nonnegative().default(0),
+  buy_now_price: z.number().int().nonnegative().default(0),
   bid_increment: z.number().int().nonnegative(),
+  bid_input_mode: z.enum(["direct_amount", "incremental"]).default("direct_amount"),
+  auction_extension_window_seconds: z.number().int().nonnegative().default(0),
+  auction_extension_seconds: z.number().int().nonnegative().default(0),
+  auction_max_extensions: z.number().int().nonnegative().default(0),
+  auction_extension_count: z.number().int().nonnegative().default(0),
   sale_starts_at: z.string(),
   sale_ends_at: z.string(),
   purchase_flow: z.enum(["checkout", "offer"]),
@@ -207,22 +263,127 @@ export const paymentAttemptSchema = z
   })
   .loose();
 
+export const offerResultSchema = z.enum(["pending", "won", "lost"]);
+export type OfferResult = z.infer<typeof offerResultSchema>;
+
 export const offerCreatedSchema = z.object({
   offer_reference: z.string(),
   offer_token: z.string(),
   product_id: productIdSchema,
   product_name: z.string(),
   purchase_method: z.enum(["auction", "reverse_auction", "blind_auction"]),
+  bid_input_mode: z.enum(["direct_amount", "incremental"]).default("direct_amount"),
   amount: z.number().int().nonnegative(),
   quantity: z.number().int().positive(),
-  status: z.literal("accepted"),
+  status: z.enum(["accepted", "won"]),
+  result: offerResultSchema.default("pending"),
+  instant_win: z.boolean().default(false),
+  extended: z.boolean().default(false),
+  extension_count: z.number().int().nonnegative().default(0),
   sale_ends_at: z.string(),
+  remaining_seconds: z.number().nonnegative().default(0),
 });
+export type OfferCreatedData = z.infer<typeof offerCreatedSchema>;
+
+export const auctionLotItemSchema = z.object({
+  product_id: productIdSchema,
+  product_name: z.string(),
+  quantity: z.number().int().positive(),
+});
+export type AuctionLotItem = z.infer<typeof auctionLotItemSchema>;
+export const auctionLotModeSchema = z.enum(["bundle", "per_product", "per_unit"]);
+export type AuctionLotMode = z.infer<typeof auctionLotModeSchema>;
+
 export const offerStatusSchema = z.object({
   amount: z.number().int().nonnegative(),
   quantity: z.number().int().positive(),
-  result: z.enum(["pending", "won", "lost"]),
+  result: offerResultSchema,
+  instant_win: z.boolean().default(false),
+  extension_count: z.number().int().nonnegative().default(0),
+  sale_ends_at: z.string().default(""),
+  remaining_seconds: z.number().nonnegative().default(0),
+  event_id: z.string().optional(),
+  lot_id: z.string().optional(),
+  lot_mode: auctionLotModeSchema.optional(),
+  items: z.array(auctionLotItemSchema).optional(),
 });
+export type OfferStatusData = z.infer<typeof offerStatusSchema>;
+
+export const auctionLotSchema = z
+  .object({
+    lot_id: z.string(),
+    lot_order: z.number().int().nonnegative().default(0),
+    title: z.string().default(""),
+    purchase_method: z
+      .enum(["auction", "reverse_auction", "blind_auction"])
+      .optional(),
+    bid_input_mode: z.enum(["direct_amount", "incremental"]).default("direct_amount"),
+    unit_price: z.number().int().nonnegative().default(0),
+    bid_increment: z.number().int().nonnegative().default(0),
+    minimum_offer_price: z.number().int().nonnegative().default(0),
+    maximum_offer_price: z.number().int().nonnegative().default(0),
+    buy_now_price: z.number().int().nonnegative().default(0),
+    sale_starts_at: z.string().default(""),
+    sale_ends_at: z.string().default(""),
+    sale_status: z.string().default(""),
+    remaining_seconds: z.number().nonnegative().default(0),
+    items: z.array(auctionLotItemSchema),
+  })
+  .loose();
+export type AuctionLot = z.infer<typeof auctionLotSchema>;
+
+export const auctionEventSchema = z
+  .object({
+    event_id: z.string(),
+    name: z.string().default(""),
+    lot_mode: auctionLotModeSchema,
+    lots: z.array(auctionLotSchema),
+  })
+  .loose();
+export type AuctionEventData = z.infer<typeof auctionEventSchema>;
+
+export const lotOfferCreatedSchema = z
+  .object({
+    offer_reference: z.string(),
+    offer_token: z.string(),
+    event_id: z.string(),
+    lot_id: z.string(),
+    lot_mode: auctionLotModeSchema,
+    items: z.array(auctionLotItemSchema),
+    amount: z.number().int().nonnegative(),
+    status: z.enum(["accepted", "won"]),
+    result: offerResultSchema.default("pending"),
+    instant_win: z.boolean().default(false),
+    extended: z.boolean().default(false),
+    extension_count: z.number().int().nonnegative().default(0),
+    sale_ends_at: z.string().default(""),
+    remaining_seconds: z.number().nonnegative().default(0),
+  })
+  .loose();
+export type LotOfferCreatedData = z.infer<typeof lotOfferCreatedSchema>;
+
+export const auctionImportItemSchema = z.object({
+  source: z.string(),
+  product_name: z.string(),
+  quantity: z.number().int().positive(),
+  confidence: z.number().min(0).max(1),
+  match_status: z.enum(["matched", "unmatched"]),
+  product_id: productIdSchema.optional(),
+});
+export type AuctionImportItem = z.infer<typeof auctionImportItemSchema>;
+export const auctionImportAnalyzedSchema = z
+  .object({
+    results: z.array(auctionImportItemSchema),
+    suggested_event_items: z.array(
+      z.object({
+        product_id: productIdSchema,
+        quantity: z.number().int().positive(),
+        product_name: z.string().default(""),
+      }),
+    ),
+  })
+  .loose();
+export type AuctionImportAnalyzedData = z.infer<typeof auctionImportAnalyzedSchema>;
 
 export const depositorResultSchema = z.object({
   status_code: z.string().min(1),
@@ -285,7 +446,14 @@ export type AdminProductInput = {
   display_order: number;
   purchase_method: Product["purchase_method"];
   reserve_price: number;
+  minimum_offer_price: number;
+  maximum_offer_price: number;
+  buy_now_price: number;
   bid_increment: number;
+  bid_input_mode: Product["bid_input_mode"];
+  auction_extension_window_seconds: number;
+  auction_extension_seconds: number;
+  auction_max_extensions: number;
   sale_starts_at: string | null;
   sale_ends_at: string | null;
   sku: string;
@@ -309,6 +477,25 @@ export type AdminProductInput = {
   image_urls: string[];
   warehouse_code: string;
   inbound_quantity: number;
+};
+
+export type AuctionEventInput = {
+  name: string;
+  lot_mode: AuctionLotMode;
+  items: { product_id: string; quantity: number }[];
+};
+
+export type BroadcastStartInput = {
+  platform: string;
+  video_id: string;
+  channel_id: string;
+  title: string;
+};
+
+export type AuctionImportImage = {
+  filename: string;
+  content_type: string;
+  data_base64: string;
 };
 
 export const aiIdentificationSchema = z.object({
